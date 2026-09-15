@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anota — finanças pelo WhatsApp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,75..125,400..800;1,75..125,400..700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --papel:#E9EAE4; --papel-2:#F3F4EF; --tinta:#1B1D1A; --tinta-fraca:#6B6F68;
+  --linha:#CFD2C9; --verde:#4E8A5B; --vermelho:#B5484A; --raio:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--papel);color:var(--tinta);font-family:'Archivo',system-ui,sans-serif;
+  font-variant-numeric:tabular-nums;line-height:1.45;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px 90px}
+button,input,select{font-family:inherit}
+
+/* ---------- login ---------- */
+#login{min-height:100vh;display:grid;place-items:center;padding:20px}
+.card-login{width:100%;max-width:360px}
+.card-login .marca{font-size:34px;font-weight:800;font-stretch:112%;letter-spacing:-.03em;margin-bottom:6px}
+.card-login p.sub{margin-bottom:24px}
+.campo{margin-bottom:12px}
+.campo label{display:block;font-size:13px;font-weight:600;margin-bottom:4px}
+.campo input{width:100%;padding:10px 12px;border:1px solid var(--linha);background:var(--papel-2);
+  border-radius:8px;font-size:15px;color:var(--tinta)}
+.campo input:focus{outline:2px solid var(--verde);outline-offset:1px;border-color:transparent}
+.btn{width:100%;padding:11px;background:var(--tinta);color:var(--papel-2);border:0;border-radius:8px;
+  font-size:15px;font-weight:700;cursor:pointer}
+.btn:hover{opacity:.9}
+.btn.sec{background:transparent;color:var(--tinta-fraca);border:1px solid var(--linha);font-weight:600;margin-top:8px}
+.erro{color:var(--vermelho);font-size:13.5px;margin-top:10px;font-weight:600}
+
+/* ---------- topo ---------- */
+header{display:flex;align-items:baseline;gap:14px;padding:26px 0 18px;border-bottom:2px solid var(--tinta);flex-wrap:wrap}
+.marca{font-size:26px;font-weight:800;font-stretch:112%;letter-spacing:-.02em}
+.marca span{color:var(--verde)}
+.mes{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:15px;font-weight:600}
+.mes button{border:1px solid var(--linha);background:var(--papel-2);color:var(--tinta);
+  width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:15px;line-height:1}
+.mes button:hover{border-color:var(--tinta)}
+.sair{background:none;border:0;color:var(--tinta-fraca);font-size:13px;cursor:pointer;text-decoration:underline}
+
+nav{display:flex;gap:2px;margin:16px 0 26px;flex-wrap:wrap;align-items:center}
+nav button{font-size:14px;font-weight:600;padding:8px 14px;border:1px solid var(--linha);
+  background:transparent;color:var(--tinta-fraca);cursor:pointer;border-radius:var(--raio)}
+nav button[aria-selected="true"]{background:var(--tinta);border-color:var(--tinta);color:var(--papel-2)}
+#novo{margin-left:auto;background:var(--verde);border-color:var(--verde);color:#fff}
+
+section[hidden]{display:none}
+h2{font-size:15px;font-weight:700;margin-bottom:2px}
+.sub{font-size:13px;color:var(--tinta-fraca);margin-bottom:14px}
+
+/* ---------- painel ---------- */
+.mes-topo{display:grid;grid-template-columns:1.15fr .85fr;gap:28px;align-items:end;margin-bottom:12px}
+.gasto-num{font-size:clamp(44px,9vw,72px);font-weight:800;font-stretch:125%;letter-spacing:-.035em;line-height:.95}
+.gasto-num .cent{font-size:.5em;font-weight:700;color:var(--tinta-fraca)}
+.gasto-rot{font-size:14px;color:var(--tinta-fraca);margin-bottom:6px}
+.barra{height:12px;background:var(--papel-2);border:1px solid var(--linha);border-radius:99px;
+  overflow:hidden;display:flex;margin-top:16px}
+.barra i{display:block;height:100%}
+.legenda{display:flex;justify-content:space-between;font-size:13px;color:var(--tinta-fraca);margin-top:8px;gap:12px}
+.ritmo{background:var(--papel-2);border:1px solid var(--linha);border-radius:var(--raio);padding:16px 18px}
+.ritmo b{display:block;font-size:26px;font-weight:800;font-stretch:112%;letter-spacing:-.02em}
+.ritmo small{font-size:13px;color:var(--tinta-fraca);display:block;margin-top:2px}
+.alerta{color:var(--vermelho)}
+.grid2{display:grid;grid-template-columns:1.05fr .95fr;gap:28px;margin-top:34px}
+
+.feed{display:flex;flex-direction:column;gap:10px}
+.lanc{background:var(--papel-2);border:1px solid var(--linha);border-left:4px solid var(--cor);
+  border-radius:var(--raio);padding:12px 14px}
+.lanc.pendente{border-left-style:dashed}
+.lanc-topo{display:flex;align-items:baseline;gap:10px}
+.lanc-desc{font-weight:600;font-size:15px}
+.lanc-val{margin-left:auto;font-weight:700;font-size:16px;white-space:nowrap}
+.lanc-val.receita{color:var(--verde)}
+.lanc-meta{font-size:12.5px;color:var(--tinta-fraca);margin-top:3px;display:flex;gap:8px;flex-wrap:wrap}
+.tag{border:1px solid var(--linha);border-radius:99px;padding:1px 8px;background:var(--papel)}
+.origem{margin-top:9px;padding-top:9px;border-top:1px dashed var(--linha);font-size:13px;
+  color:var(--tinta-fraca);display:flex;gap:8px;align-items:flex-start}
+.origem em{font-style:italic}
+.acoes{display:flex;gap:6px;margin-top:10px}
+.acoes button{font-size:12.5px;font-weight:600;padding:4px 10px;border:1px solid var(--linha);
+  background:var(--papel);border-radius:6px;cursor:pointer;color:var(--tinta-fraca)}
+.acoes button:hover{border-color:var(--tinta);color:var(--tinta)}
+
+.cat{display:flex;flex-direction:column;gap:14px}
+.cat-linha{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:baseline}
+.cat-nome{font-size:14.5px;font-weight:600}
+.cat-val{font-size:14.5px;font-weight:700}
+.cat-barra{grid-column:1/-1;height:8px;background:var(--papel-2);border:1px solid var(--linha);
+  border-radius:99px;overflow:hidden}
+.cat-barra i{display:block;height:100%;background:var(--cor)}
+.cat-obs{grid-column:1/-1;font-size:12.5px;color:var(--tinta-fraca)}
+.estouro{color:var(--vermelho);font-weight:600}
+
+/* ---------- tabela ---------- */
+.filtros{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.filtros input,.filtros select{font-size:14px;padding:7px 10px;border:1px solid var(--linha);
+  background:var(--papel-2);border-radius:8px;color:var(--tinta)}
+.filtros input{flex:1;min-width:180px}
+table{width:100%;border-collapse:collapse;font-size:14.5px}
+th{text-align:left;font-weight:700;font-size:13px;color:var(--tinta-fraca);padding:0 10px 8px;
+  border-bottom:1px solid var(--tinta)}
+td{padding:11px 10px;border-bottom:1px solid var(--linha);vertical-align:top}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--papel-2)}
+.num{text-align:right;font-weight:700;white-space:nowrap}
+.ponto{display:inline-block;width:8px;height:8px;border-radius:99px;background:var(--cor);
+  margin-right:7px;vertical-align:1px}
+.vazio{padding:40px 10px;color:var(--tinta-fraca);font-size:14.5px;text-align:center}
+
+/* ---------- orçamento ---------- */
+.orc-linha{display:grid;grid-template-columns:1fr 140px;gap:12px;align-items:center;
+  padding:10px 0;border-bottom:1px solid var(--linha)}
+.orc-linha input{width:100%;padding:8px 10px;border:1px solid var(--linha);background:var(--papel-2);
+  border-radius:8px;font-size:14.5px;text-align:right;color:var(--tinta)}
+
+/* ---------- conexão ---------- */
+.conexao{max-width:560px}
+.token{background:var(--papel-2);border:1px solid var(--linha);border-radius:var(--raio);
+  padding:16px;margin:16px 0;text-align:center}
+.token strong{display:block;font-size:26px;font-weight:800;font-stretch:112%;letter-spacing:.06em;
+  word-break:break-all}
+.passo{display:grid;grid-template-columns:auto 1fr;gap:14px;padding:14px 0;border-bottom:1px solid var(--linha)}
+.passo:last-child{border:0}
+.passo b{width:26px;height:26px;border-radius:99px;background:var(--tinta);color:var(--papel-2);
+  display:grid;place-items:center;font-size:13px;font-weight:700}
+.passo p{font-size:14.5px}
+.passo small{display:block;font-size:13px;color:var(--tinta-fraca);margin-top:3px}
+.ok{background:#DCEBD8;border:1px solid #BCD6B6;border-radius:var(--raio);padding:14px 16px;font-size:14.5px}
+
+/* ---------- modal ---------- */
+dialog{border:1px solid var(--linha);border-radius:14px;background:var(--papel);color:var(--tinta);
+  padding:22px;width:min(420px,92vw)}
+dialog::backdrop{background:rgba(27,29,26,.45)}
+dialog h3{font-size:17px;font-weight:700;margin-bottom:14px}
+.linha2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.campo select{width:100%;padding:10px 12px;border:1px solid var(--linha);background:var(--papel-2);
+  border-radius:8px;font-size:15px;color:var(--tinta)}
+.rodape{display:flex;gap:8px;margin-top:18px}
+.rodape .btn{flex:1}
+.carregando{padding:34px;text-align:center;color:var(--tinta-fraca);font-size:14.5px}
+
+@media(max-width:820px){
+  .mes-topo,.grid2{grid-template-columns:1fr;gap:20px}
+  .col-cat{order:-1}
+  th.esconde,td.esconde{display:none}
+  #novo{margin-left:0;width:100%;margin-top:8px}
+}
+</style>
+</head>
+<body>
+
+<!-- ================= LOGIN ================= -->
+<div id="login">
+  <div class="card-login">
+    <div class="marca">Anota<span>.</span></div>
+    <p class="sub">Seus gastos, registrados no WhatsApp na hora que acontecem.</p>
+    <div class="campo"><label for="email">E-mail</label><input id="email" type="email" autocomplete="email"></div>
+    <div class="campo"><label for="senha">Senha</label><input id="senha" type="password" autocomplete="current-password"></div>
+    <button class="btn" id="entrar">Entrar</button>
+    <button class="btn sec" id="criar">Criar conta</button>
+    <div class="erro" id="erro-login"></div>
+  </div>
+</div>
+
+<!-- ================= APP ================= -->
+<div class="wrap" id="app" hidden>
+  <header>
+    <div class="marca">Anota<span>.</span></div>
+    <div class="mes">
+      <button id="mes-ant" aria-label="Mês anterior">‹</button>
+      <span id="mes-rot">—</span>
+      <button id="mes-prox" aria-label="Próximo mês">›</button>
+      <button class="sair" id="sair">sair</button>
+    </div>
+  </header>
+
+  <nav role="tablist">
+    <button role="tab" aria-selected="true" data-aba="painel">Painel</button>
+    <button role="tab" aria-selected="false" data-aba="lancamentos">Lançamentos</button>
+    <button role="tab" aria-selected="false" data-aba="orcamento">Orçamento</button>
+    <button role="tab" aria-selected="false" data-aba="conexao">Meu WhatsApp</button>
+    <button id="novo">+ Lançar</button>
+  </nav>
+
+  <section id="painel">
+    <div class="mes-topo">
+      <div>
+        <div class="gasto-rot">Gasto no mês</div>
+        <div class="gasto-num" id="total">—</div>
+        <div class="barra" id="barra-mes"></div>
+        <div class="legenda" id="legenda"></div>
+      </div>
+      <div class="ritmo" id="ritmo"></div>
+    </div>
+    <div class="grid2">
+      <div>
+        <h2>Chegou pelo WhatsApp</h2>
+        <p class="sub">Confira o que o assistente entendeu.</p>
+        <div class="feed" id="feed"></div>
+      </div>
+      <div class="col-cat">
+        <h2>Onde o dinheiro foi</h2>
+        <p class="sub">Comparado ao orçamento de cada categoria.</p>
+        <div class="cat" id="cats"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="lancamentos" hidden>
+    <h2>Todos os lançamentos</h2>
+    <p class="sub" id="conta-lanc">—</p>
+    <div class="filtros">
+      <input id="busca" type="search" placeholder="Buscar por descrição ou estabelecimento">
+      <select id="f-cat"><option value="">Todas as categorias</option></select>
+      <select id="f-conta"><option value="">Todas as formas</option></select>
+    </div>
+    <table>
+      <thead><tr>
+        <th style="width:70px">Data</th><th>Descrição</th>
+        <th class="esconde">Categoria</th><th class="esconde">Forma</th>
+        <th style="text-align:right">Valor</th>
+      </tr></thead>
+      <tbody id="tabela"></tbody>
+    </table>
+  </section>
+
+  <section id="orcamento" hidden>
+    <h2>Orçamento por categoria</h2>
+    <p class="sub">Vale para o mês selecionado no topo. Sai do campo para salvar.</p>
+    <div id="orc" style="max-width:560px"></div>
+  </section>
+
+  <section id="conexao" hidden>
+    <div class="conexao">
+      <h2>Conectar seu WhatsApp</h2>
+      <p class="sub">Seu número vira sua identificação. Depois de conectado, é só falar.</p>
+      <div id="conexao-corpo"></div>
+    </div>
+  </section>
+</div>
+
+<!-- ================= MODAL ================= -->
+<dialog id="dlg">
+  <h3 id="dlg-titulo">Novo lançamento</h3>
+  <div class="linha2">
+    <div class="campo"><label for="f-valor">Valor</label><input id="f-valor" type="number" step="0.01" min="0"></div>
+    <div class="campo"><label for="f-data">Data</label><input id="f-data" type="date"></div>
+  </div>
+  <div class="campo"><label for="f-desc">Descrição</label><input id="f-desc" type="text"></div>
+  <div class="linha2">
+    <div class="campo"><label for="f-categoria">Categoria</label><select id="f-categoria"></select></div>
+    <div class="campo"><label for="f-forma">Forma</label><select id="f-forma"></select></div>
+  </div>
+  <div class="campo"><label for="f-tipo">Tipo</label>
+    <select id="f-tipo"><option value="despesa">Despesa</option><option value="receita">Receita</option></select>
+  </div>
+  <div class="erro" id="erro-dlg"></div>
+  <div class="rodape">
+    <button class="btn sec" id="cancelar">Cancelar</button>
+    <button class="btn" id="salvar">Salvar</button>
+  </div>
+</dialog>
+
+<script type="module">
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+// ===================== COLE AQUI =====================
+const SUPABASE_URL  = "https://jqbgpcqrkrnwuffxalxg.supabase.co";
+const SUPABASE_ANON  = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxYmdwY3Fya3Jud3VmZnhhbHhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk1MDM2NDcsImV4cCI6MjEwNTA3OTY0N30.SjI87gj32lfQI13cpFPOemVXwUrrfp1D260np2WRZu0";
+// =====================================================
+
+const db = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+const $  = (s) => document.querySelector(s);
+const brl = (v) => Number(v||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+const hoje = () => new Intl.DateTimeFormat("en-CA",{timeZone:"America/Sao_Paulo"}).format(new Date());
+
+let mes = (() => { const d = new Date(hoje()); return new Date(d.getFullYear(), d.getMonth(), 1); })();
+const mesISO = () => `${mes.getFullYear()}-${String(mes.getMonth()+1).padStart(2,"0")}-01`;
+const fimMesISO = () => {
+  const f = new Date(mes.getFullYear(), mes.getMonth()+1, 0);
+  return `${f.getFullYear()}-${String(f.getMonth()+1).padStart(2,"0")}-${String(f.getDate()).padStart(2,"0")}`;
+};
+
+let categorias = [], contas = [], transacoes = [], editando = null;
+
+// ===================== AUTENTICAÇÃO =====================
+$("#entrar").onclick = async () => {
+  const { error } = await db.auth.signInWithPassword({ email: $("#email").value.trim(), password: $("#senha").value });
+  if (error) $("#erro-login").textContent = traduz(error.message); else iniciar();
+};
+
+$("#criar").onclick = async () => {
+  const email = $("#email").value.trim();
+  const { error } = await db.auth.signUp({
+    email, password: $("#senha").value,
+    options: { data: { nome: email.split("@")[0] } },
+  });
+  if (error) { $("#erro-login").textContent = traduz(error.message); return; }
+  $("#erro-login").textContent = "Conta criada. Confirme o e-mail e entre.";
+};
+
+$("#sair").onclick = async () => { await db.auth.signOut(); location.reload(); };
+
+function traduz(m){
+  if (/Invalid login/i.test(m)) return "E-mail ou senha incorretos.";
+  if (/already registered/i.test(m)) return "Esse e-mail já tem conta.";
+  if (/at least/i.test(m)) return "A senha precisa de pelo menos 6 caracteres.";
+  return m;
+}
+
+// ===================== BOOT =====================
+const { data:{ session } } = await db.auth.getSession();
+if (session) iniciar();
+
+async function iniciar(){
+  $("#login").hidden = true;
+  $("#app").hidden = false;
+  const [c1, c2] = await Promise.all([
+    db.from("categorias").select("id, nome, cor, tipo").eq("ativo", true).order("ordem"),
+    db.from("contas").select("id, nome").eq("ativo", true),
+  ]);
+  categorias = c1.data ?? [];
+  contas     = c2.data ?? [];
+  montarSelects();
+  await carregar();
+}
+
+function montarSelects(){
+  const opCat = categorias.map(c => `<option value="${c.id}">${c.nome}</option>`).join("");
+  const opCon = contas.map(c => `<option value="${c.id}">${c.nome}</option>`).join("");
+  $("#f-categoria").innerHTML = opCat;
+  $("#f-forma").innerHTML = `<option value="">—</option>` + opCon;
+  $("#f-cat").innerHTML = `<option value="">Todas as categorias</option>` + opCat;
+  $("#f-conta").innerHTML = `<option value="">Todas as formas</option>` + opCon;
+}
+
+// ===================== CARREGAR MÊS =====================
+async function carregar(){
+  $("#mes-rot").textContent = mes.toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
+  $("#feed").innerHTML = `<div class="carregando">Carregando…</div>`;
+
+  const [resumo, porCat, lista, orcs] = await Promise.all([
+    db.rpc("resumo_mes", { p_mes: mesISO() }),
+    db.from("v_resumo_categoria").select("*").eq("mes", mesISO()),
+    db.from("v_transacoes").select("*").gte("data", mesISO()).lte("data", fimMesISO()).order("data",{ascending:false}).order("criado_em",{ascending:false}),
+    db.from("orcamentos").select("categoria_id, valor").eq("mes", mesISO()),
+  ]);
+
+  transacoes = lista.data ?? [];
+  pintarPainel(resumo.data?.[0], porCat.data ?? []);
+  pintarFeed();
+  pintarTabela();
+  pintarOrcamento(orcs.data ?? []);
+  pintarConexao();
+}
+
+function pintarPainel(r, porCat){
+  const gasto = Number(r?.gasto ?? 0), orc = Number(r?.orcamento ?? 0);
+  const [int, cent] = brl(gasto).split(",");
+  $("#total").innerHTML = `R$ ${int}<span class="cent">,${cent}</span>`;
+
+  const base = orc || gasto || 1;
+  $("#barra-mes").innerHTML = porCat
+    .map(c => `<i style="width:${Math.min(Number(c.gasto)/base*100,100)}%;background:${c.categoria_cor}" title="${c.categoria}"></i>`)
+    .join("");
+
+  $("#legenda").innerHTML = orc
+    ? `<span>Orçamento: R$ ${brl(orc)}</span><span>${Math.round(gasto/orc*100)}% usado</span>`
+    : `<span>Sem orçamento definido</span><span><a href="#" id="ir-orc" style="color:inherit">definir</a></span>`;
+  const ir = $("#ir-orc");
+  if (ir) ir.onclick = (e) => { e.preventDefault(); abrirAba("orcamento"); };
+
+  const sobra = Number(r?.sobra_por_dia ?? 0), media = Number(r?.media_diaria ?? 0);
+  $("#ritmo").innerHTML = orc ? `
+    <b>R$ ${brl(sobra)}</b>
+    <small>é o que sobra por dia até o fim do mês</small>
+    <hr style="border:0;border-top:1px solid var(--linha);margin:13px 0">
+    <b class="${media>sobra?'alerta':''}">R$ ${brl(media)}</b>
+    <small>foi sua média diária${media>sobra?` — <span class="alerta">acima do que dá pra manter</span>`:""}</small>
+  ` : `
+    <b>R$ ${brl(media)}</b>
+    <small>sua média diária neste mês</small>
+    <hr style="border:0;border-top:1px solid var(--linha);margin:13px 0">
+    <small>Defina um orçamento para ver quanto sobra por dia — é esse número que muda comportamento.</small>`;
+
+  $("#cats").innerHTML = porCat.length ? porCat
+    .sort((a,b)=>Number(b.gasto)-Number(a.gasto))
+    .map(c => {
+      const g = Number(c.gasto), o = Number(c.orcamento);
+      const pct = o ? g/o*100 : 100, estourou = o && g>o;
+      return `<div class="cat-linha" style="--cor:${c.categoria_cor}">
+        <span class="cat-nome">${c.categoria}</span>
+        <span class="cat-val">R$ ${brl(g)}</span>
+        <div class="cat-barra"><i style="width:${Math.min(pct,100)}%"></i></div>
+        <span class="cat-obs ${estourou?'estouro':''}">${
+          !o ? `${c.lancamentos} lançamento${c.lancamentos>1?"s":""}`
+             : estourou ? `passou R$ ${brl(g-o)} do orçamento`
+                        : `restam R$ ${brl(o-g)} de R$ ${brl(o)}`}</span>
+      </div>`;
+    }).join("") : `<div class="vazio">Nenhum gasto neste mês.</div>`;
+}
+
+const ICONE = { audio:"🎤", texto:"💬", manual:"✍️", recorrente:"🔁" };
+
+function pintarFeed(){
+  const ult = transacoes.slice(0,6);
+  $("#feed").innerHTML = ult.length ? ult.map(t => `
+    <article class="lanc ${t.revisado?'':'pendente'}" style="--cor:${t.categoria_cor||'#8A8F86'}">
+      <div class="lanc-topo">
+        <span class="lanc-desc">${t.descricao}</span>
+        <span class="lanc-val ${t.tipo==='receita'?'receita':''}">${t.tipo==='receita'?'+':''}R$ ${brl(t.valor)}</span>
+      </div>
+      <div class="lanc-meta">
+        <span class="tag">${t.categoria ?? "Sem categoria"}</span>
+        ${t.conta?`<span class="tag">${t.conta}</span>`:""}
+        <span>${t.data.slice(8,10)}/${t.data.slice(5,7)}</span>
+      </div>
+      ${t.texto_original ? `<div class="origem">${ICONE[t.origem]||"•"} <span><em>"${t.texto_original}"</em></span></div>` : ""}
+      <div class="acoes">
+        <button data-editar="${t.id}">Corrigir</button>
+        <button data-apagar="${t.id}">Apagar</button>
+      </div>
+    </article>`).join("")
+    : `<div class="vazio">Nada por aqui ainda.<br>Mande um gasto no WhatsApp ou use o botão Lançar.</div>`;
+}
+
+function pintarTabela(){
+  const q = $("#busca").value.toLowerCase();
+  const fc = $("#f-cat").value, ff = $("#f-conta").value;
+  const filtradas = transacoes.filter(t =>
+    (!q || (t.descricao+" "+(t.estabelecimento??"")).toLowerCase().includes(q)) &&
+    (!fc || t.categoria_id === fc) && (!ff || t.conta_id === ff));
+
+  $("#conta-lanc").textContent = `${filtradas.length} de ${transacoes.length} lançamentos no mês`;
+  $("#tabela").innerHTML = filtradas.length ? filtradas.map(t => `
+    <tr data-editar="${t.id}">
+      <td>${t.data.slice(8,10)}/${t.data.slice(5,7)}</td>
+      <td><span class="ponto" style="--cor:${t.categoria_cor||'#8A8F86'}"></span>${t.descricao}
+        ${t.estabelecimento?`<br><small style="color:var(--tinta-fraca)">${t.estabelecimento}</small>`:""}</td>
+      <td class="esconde">${t.categoria ?? "—"}</td>
+      <td class="esconde">${t.conta ?? "—"}</td>
+      <td class="num ${t.tipo==='receita'?'receita':''}">${t.tipo==='receita'?'+':''}R$ ${brl(t.valor)}</td>
+    </tr>`).join("")
+    : `<tr><td colspan="5" class="vazio">Nenhum lançamento com esses filtros.</td></tr>`;
+}
+
+function pintarOrcamento(orcs){
+  const mapa = Object.fromEntries(orcs.map(o => [o.categoria_id, o.valor]));
+  $("#orc").innerHTML = categorias.filter(c => c.tipo === "despesa").map(c => `
+    <div class="orc-linha">
+      <span class="cat-nome"><span class="ponto" style="--cor:${c.cor}"></span>${c.nome}</span>
+      <input type="number" step="0.01" min="0" placeholder="0,00"
+             value="${mapa[c.id] ?? ""}" data-orc="${c.id}">
+    </div>`).join("");
+}
+
+function pintarConexao(){
+  db.from("perfis").select("telefone, vinculado_em").maybeSingle().then(async ({ data: perfil }) => {
+    if (perfil?.telefone) {
+      $("#conexao-corpo").innerHTML = `
+        <div class="ok">✓ Conectado ao número <strong>+${perfil.telefone}</strong>.<br>
+        Pode mandar seus gastos por áudio ou texto.</div>`;
+      return;
+    }
+    const { data: v } = await db.from("vinculos").select("token").is("usado_em", null).limit(1).maybeSingle();
+    $("#conexao-corpo").innerHTML = `
+      <div class="token"><small style="color:var(--tinta-fraca);font-size:13px">seu código</small>
+        <strong>${v?.token ?? "—"}</strong></div>
+      <div class="passo"><b>1</b><p>Salve o número do assistente nos contatos.
+        <small>Sem salvar, o WhatsApp esconde a conversa em "não salvos".</small></p></div>
+      <div class="passo"><b>2</b><p>Mande o código acima na conversa.
+        <small>Ele vincula este número à sua conta. Só precisa uma vez.</small></p></div>
+      <div class="passo"><b>3</b><p>Pronto. Fale ou escreva do seu jeito.
+        <small>"gastei 45 e noventa no almoço, crédito"</small></p></div>`;
+  });
+}
+
+// ===================== AÇÕES =====================
+document.addEventListener("click", async (e) => {
+  const ed = e.target.closest("[data-editar]");
+  const ap = e.target.closest("[data-apagar]");
+
+  if (ap) {
+    e.stopPropagation();
+    if (!confirm("Apagar este lançamento?")) return;
+    // Soft delete: some da view, continua no banco.
+    await db.from("transacoes").update({ excluido_em: new Date().toISOString() }).eq("id", ap.dataset.apagar);
+    await carregar();
+    return;
+  }
+  if (ed) abrirModal(transacoes.find(t => t.id === ed.dataset.editar));
+});
+
+$("#novo").onclick = () => abrirModal(null);
+$("#cancelar").onclick = () => $("#dlg").close();
+
+function abrirModal(t){
+  editando = t?.id ?? null;
+  $("#dlg-titulo").textContent = t ? "Corrigir lançamento" : "Novo lançamento";
+  $("#f-valor").value = t?.valor ?? "";
+  $("#f-data").value  = t?.data ?? hoje();
+  $("#f-desc").value  = t?.descricao ?? "";
+  $("#f-categoria").value = t?.categoria_id ?? (categorias[0]?.id ?? "");
+  $("#f-forma").value = t?.conta_id ?? "";
+  $("#f-tipo").value  = t?.tipo ?? "despesa";
+  $("#erro-dlg").textContent = "";
+  $("#dlg").showModal();
+}
+
+$("#salvar").onclick = async () => {
+  const valor = Number($("#f-valor").value);
+  if (!valor || valor <= 0) { $("#erro-dlg").textContent = "Informe um valor maior que zero."; return; }
+  if (!$("#f-desc").value.trim()) { $("#erro-dlg").textContent = "Informe uma descrição."; return; }
+
+  const dados = {
+    valor, tipo: $("#f-tipo").value, descricao: $("#f-desc").value.trim(),
+    categoria_id: $("#f-categoria").value || null,
+    conta_id: $("#f-forma").value || null,
+    data: $("#f-data").value, revisado: true,
+  };
+
+  const { data:{ user } } = await db.auth.getUser();
+  const r = editando
+    ? await db.from("transacoes").update(dados).eq("id", editando)
+    : await db.from("transacoes").insert({ ...dados, user_id: user.id, origem: "manual" });
+
+  if (r.error) { $("#erro-dlg").textContent = r.error.message; return; }
+  $("#dlg").close();
+  await carregar();
+};
+
+// orçamento salva ao sair do campo
+document.addEventListener("change", async (e) => {
+  const inp = e.target.closest("[data-orc]");
+  if (!inp) return;
+  const { data:{ user } } = await db.auth.getUser();
+  const valor = Number(inp.value);
+  if (!valor) {
+    await db.from("orcamentos").delete().eq("categoria_id", inp.dataset.orc).eq("mes", mesISO());
+  } else {
+    await db.from("orcamentos").upsert(
+      { user_id: user.id, categoria_id: inp.dataset.orc, mes: mesISO(), valor },
+      { onConflict: "user_id,categoria_id,mes" });
+  }
+  inp.style.borderColor = "var(--verde)";
+  setTimeout(() => inp.style.borderColor = "", 900);
+});
+
+// ===================== NAVEGAÇÃO =====================
+const abas = document.querySelectorAll('nav [role="tab"]');
+function abrirAba(id){
+  abas.forEach(o => o.setAttribute("aria-selected", o.dataset.aba === id));
+  document.querySelectorAll("#app section").forEach(s => s.hidden = (s.id !== id));
+}
+abas.forEach(b => b.onclick = () => abrirAba(b.dataset.aba));
+
+$("#mes-ant").onclick  = () => { mes = new Date(mes.getFullYear(), mes.getMonth()-1, 1); carregar(); };
+$("#mes-prox").onclick = () => { mes = new Date(mes.getFullYear(), mes.getMonth()+1, 1); carregar(); };
+$("#busca").oninput = pintarTabela;
+$("#f-cat").onchange = pintarTabela;
+$("#f-conta").onchange = pintarTabela;
+</script>
+</body>
+</html>
