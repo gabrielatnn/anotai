@@ -10,12 +10,15 @@
 <style>
 :root{
   --papel:#E9EAE4; --papel-2:#F3F4EF; --tinta:#1B1D1A; --tinta-fraca:#6B6F68;
-  --linha:#CFD2C9; --verde:#4E8A5B; --vermelho:#B5484A; --raio:10px;
+  --linha:#D6D9D0; --verde:#4E8A5B; --vermelho:#B5484A;
+  --raio:12px; --sombra:0 1px 2px rgba(27,29,26,.04);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--papel);color:var(--tinta);font-family:'Archivo',system-ui,sans-serif;
   font-variant-numeric:tabular-nums;line-height:1.45;-webkit-font-smoothing:antialiased}
-.wrap{max-width:1080px;margin:0 auto;padding:0 20px 90px}
+.wrap{max-width:1000px;margin:0 auto;padding:0 24px 90px}
+.card{background:var(--papel-2);border:1px solid var(--linha);border-radius:var(--raio);
+  padding:18px 20px;box-shadow:var(--sombra)}
 button,input,select{font-family:inherit}
 
 /* ---------- login ---------- */
@@ -36,43 +39,57 @@ button,input,select{font-family:inherit}
 .erro{color:var(--vermelho);font-size:13.5px;margin-top:10px;font-weight:600}
 
 /* ---------- topo ---------- */
-header{display:flex;align-items:baseline;gap:14px;padding:26px 0 18px;border-bottom:2px solid var(--tinta);flex-wrap:wrap}
+header{display:flex;align-items:center;gap:14px;padding:24px 0 16px;border-bottom:1px solid var(--tinta);flex-wrap:wrap}
 .marca{font-size:26px;font-weight:800;font-stretch:112%;letter-spacing:-.02em}
 .marca span{color:var(--verde)}
-.mes{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:15px;font-weight:600}
+.mes{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:14.5px;font-weight:600}
+.mes span{min-width:130px;text-align:center;text-transform:capitalize}
 .mes button{border:1px solid var(--linha);background:var(--papel-2);color:var(--tinta);
   width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:15px;line-height:1}
 .mes button:hover{border-color:var(--tinta)}
-.sair{background:none;border:0;color:var(--tinta-fraca);font-size:13px;cursor:pointer;text-decoration:underline}
+.sair{background:none;border:0;color:var(--tinta-fraca);font-size:13px;cursor:pointer;
+  margin-left:14px;padding:4px 2px}
+.sair:hover{color:var(--tinta)}
 
-nav{display:flex;gap:2px;margin:16px 0 26px;flex-wrap:wrap;align-items:center}
-nav button{font-size:14px;font-weight:600;padding:8px 14px;border:1px solid var(--linha);
-  background:transparent;color:var(--tinta-fraca);cursor:pointer;border-radius:var(--raio)}
+nav{display:flex;gap:4px;margin:18px 0 22px;flex-wrap:wrap;align-items:center}
+nav button{font-size:14px;font-weight:600;padding:7px 14px;border:1px solid transparent;
+  background:transparent;color:var(--tinta-fraca);cursor:pointer;border-radius:8px}
+nav button:hover{background:var(--papel-2);color:var(--tinta)}
 nav button[aria-selected="true"]{background:var(--tinta);border-color:var(--tinta);color:var(--papel-2)}
 #novo{margin-left:auto;background:var(--verde);border-color:var(--verde);color:#fff}
+#novo:hover{background:#3F7349;color:#fff}
 
 section[hidden]{display:none}
 h2{font-size:15px;font-weight:700;margin-bottom:2px}
 .sub{font-size:13px;color:var(--tinta-fraca);margin-bottom:14px}
 
 /* ---------- painel ---------- */
-.mes-topo{display:grid;grid-template-columns:1.15fr .85fr;gap:28px;align-items:end;margin-bottom:12px}
-.gasto-num{font-size:clamp(44px,9vw,72px);font-weight:800;font-stretch:125%;letter-spacing:-.035em;line-height:.95}
-.gasto-num .cent{font-size:.5em;font-weight:700;color:var(--tinta-fraca)}
-.gasto-rot{font-size:14px;color:var(--tinta-fraca);margin-bottom:6px}
-.barra{height:12px;background:var(--papel-2);border:1px solid var(--linha);border-radius:99px;
-  overflow:hidden;display:flex;margin-top:16px}
-.barra i{display:block;height:100%}
-.legenda{display:flex;justify-content:space-between;font-size:13px;color:var(--tinta-fraca);margin-top:8px;gap:12px}
-.ritmo{background:var(--papel-2);border:1px solid var(--linha);border-radius:var(--raio);padding:16px 18px}
-.ritmo b{display:block;font-size:26px;font-weight:800;font-stretch:112%;letter-spacing:-.02em}
-.ritmo small{font-size:13px;color:var(--tinta-fraca);display:block;margin-top:2px}
+.metricas{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:12px}
+.metrica .rot{font-size:12.5px;font-weight:600;color:var(--tinta-fraca);
+  text-transform:uppercase;letter-spacing:.04em}
+.metrica .n{font-size:30px;font-weight:700;letter-spacing:-.02em;line-height:1.15;margin-top:6px;
+  display:flex;align-items:baseline;gap:5px}
+.metrica.destaque .n{font-size:40px;font-weight:800}
+.metrica .n .sifrao{font-size:.5em;font-weight:600;color:var(--tinta-fraca);letter-spacing:0}
+.metrica .n .cent{font-size:.58em;font-weight:700;color:var(--tinta-fraca)}
+.metrica .obs{font-size:12.5px;color:var(--tinta-fraca);margin-top:5px;line-height:1.35}
 .alerta{color:var(--vermelho)}
-.grid2{display:grid;grid-template-columns:1.05fr .95fr;gap:28px;margin-top:34px}
+
+.faixa{margin-top:12px}
+.barra{height:10px;background:var(--papel-2);border:1px solid var(--linha);border-radius:99px;
+  overflow:hidden;display:flex}
+.barra i{display:block;height:100%}
+.legenda{display:flex;justify-content:space-between;font-size:12.5px;color:var(--tinta-fraca);
+  margin-top:7px;gap:12px}
+.legenda a{color:var(--verde);font-weight:600}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;align-items:start}
+.bloco h2{margin-bottom:2px}
+.bloco .sub{margin-bottom:14px}
 
 .feed{display:flex;flex-direction:column;gap:10px}
-.lanc{background:var(--papel-2);border:1px solid var(--linha);border-left:4px solid var(--cor);
-  border-radius:var(--raio);padding:12px 14px}
+.lanc{background:var(--papel);border:1px solid var(--linha);border-left:3px solid var(--cor);
+  border-radius:8px;padding:11px 13px}
 .lanc.pendente{border-left-style:dashed}
 .lanc-topo{display:flex;align-items:baseline;gap:10px}
 .lanc-desc{font-weight:600;font-size:15px}
@@ -88,11 +105,11 @@ h2{font-size:15px;font-weight:700;margin-bottom:2px}
   background:var(--papel);border-radius:6px;cursor:pointer;color:var(--tinta-fraca)}
 .acoes button:hover{border-color:var(--tinta);color:var(--tinta)}
 
-.cat{display:flex;flex-direction:column;gap:14px}
+.cat{display:flex;flex-direction:column;gap:13px}
 .cat-linha{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:baseline}
 .cat-nome{font-size:14.5px;font-weight:600}
 .cat-val{font-size:14.5px;font-weight:700}
-.cat-barra{grid-column:1/-1;height:8px;background:var(--papel-2);border:1px solid var(--linha);
+.cat-barra{grid-column:1/-1;height:7px;background:var(--papel);border:1px solid var(--linha);
   border-radius:99px;overflow:hidden}
 .cat-barra i{display:block;height:100%;background:var(--cor)}
 .cat-obs{grid-column:1/-1;font-size:12.5px;color:var(--tinta-fraca)}
@@ -112,7 +129,7 @@ tbody tr:hover{background:var(--papel-2)}
 .num{text-align:right;font-weight:700;white-space:nowrap}
 .ponto{display:inline-block;width:8px;height:8px;border-radius:99px;background:var(--cor);
   margin-right:7px;vertical-align:1px}
-.vazio{padding:40px 10px;color:var(--tinta-fraca);font-size:14.5px;text-align:center}
+.vazio{padding:26px 10px;color:var(--tinta-fraca);font-size:14px;text-align:center;line-height:1.5}
 
 /* ---------- orçamento ---------- */
 .orc-linha{display:grid;grid-template-columns:1fr 140px;gap:12px;align-items:center;
@@ -146,8 +163,8 @@ dialog h3{font-size:17px;font-weight:700;margin-bottom:14px}
 .rodape .btn{flex:1}
 .carregando{padding:34px;text-align:center;color:var(--tinta-fraca);font-size:14.5px}
 
-@media(max-width:820px){
-  .mes-topo,.grid2{grid-template-columns:1fr;gap:20px}
+@media(max-width:860px){
+  .metricas,.grid2{grid-template-columns:1fr;gap:10px}
   .col-cat{order:-1}
   th.esconde,td.esconde{display:none}
   #novo{margin-left:0;width:100%;margin-top:8px}
@@ -190,22 +207,18 @@ dialog h3{font-size:17px;font-weight:700;margin-bottom:14px}
   </nav>
 
   <section id="painel">
-    <div class="mes-topo">
-      <div>
-        <div class="gasto-rot">Gasto no mês</div>
-        <div class="gasto-num" id="total">—</div>
-        <div class="barra" id="barra-mes"></div>
-        <div class="legenda" id="legenda"></div>
-      </div>
-      <div class="ritmo" id="ritmo"></div>
+    <div class="metricas" id="metricas"></div>
+    <div class="card faixa">
+      <div class="barra" id="barra-mes"></div>
+      <div class="legenda" id="legenda"></div>
     </div>
     <div class="grid2">
-      <div>
+      <div class="card bloco">
         <h2>Chegou pelo WhatsApp</h2>
         <p class="sub">Confira o que o assistente entendeu.</p>
         <div class="feed" id="feed"></div>
       </div>
-      <div class="col-cat">
+      <div class="card bloco col-cat">
         <h2>Onde o dinheiro foi</h2>
         <p class="sub">Comparado ao orçamento de cada categoria.</p>
         <div class="cat" id="cats"></div>
@@ -385,10 +398,33 @@ async function carregar(){
   pintarConexao();
 }
 
+function dinheiro(v, cls=""){
+  const [int, cent] = brl(v).split(",");
+  return `<span class="sifrao">R$</span><span class="${cls}">${int}<span class="cent">,${cent}</span></span>`;
+}
+
 function pintarPainel(r, porCat){
   const gasto = Number(r?.gasto ?? 0), orc = Number(r?.orcamento ?? 0);
-  const [int, cent] = brl(gasto).split(",");
-  $("#total").innerHTML = `R$ ${int}<span class="cent">,${cent}</span>`;
+  const sobra = Number(r?.sobra_por_dia ?? 0), media = Number(r?.media_diaria ?? 0);
+  const dias  = Number(r?.dias_restantes ?? 0);
+  const acima = orc && media > sobra;
+
+  $("#metricas").innerHTML = `
+    <div class="card metrica destaque">
+      <div class="rot">Gasto no mês</div>
+      <div class="n">${dinheiro(gasto)}</div>
+      <div class="obs">${orc ? `de R$ ${brl(orc)} orçados` : "sem orçamento definido"}</div>
+    </div>
+    <div class="card metrica">
+      <div class="rot">Média diária</div>
+      <div class="n ${acima?'alerta':''}">${dinheiro(media)}</div>
+      <div class="obs">${acima ? "acima do que dá pra manter" : "no mês corrente"}</div>
+    </div>
+    <div class="card metrica">
+      <div class="rot">Sobra por dia</div>
+      <div class="n">${orc ? dinheiro(sobra) : '<span style="color:var(--tinta-fraca)">—</span>'}</div>
+      <div class="obs">${orc ? `nos ${dias} dias restantes` : "defina um orçamento para ver"}</div>
+    </div>`;
 
   const base = orc || gasto || 1;
   $("#barra-mes").innerHTML = porCat
@@ -396,23 +432,10 @@ function pintarPainel(r, porCat){
     .join("");
 
   $("#legenda").innerHTML = orc
-    ? `<span>Orçamento: R$ ${brl(orc)}</span><span>${Math.round(gasto/orc*100)}% usado</span>`
-    : `<span>Sem orçamento definido</span><span><a href="#" id="ir-orc" style="color:inherit">definir</a></span>`;
+    ? `<span>${porCat.length} categoria${porCat.length===1?"":"s"} com gasto</span><span>${Math.round(gasto/orc*100)}% do orçamento usado</span>`
+    : `<span>A barra mostra a divisão por categoria</span><span><a href="#" id="ir-orc">definir orçamento</a></span>`;
   const ir = $("#ir-orc");
   if (ir) ir.onclick = (e) => { e.preventDefault(); abrirAba("orcamento"); };
-
-  const sobra = Number(r?.sobra_por_dia ?? 0), media = Number(r?.media_diaria ?? 0);
-  $("#ritmo").innerHTML = orc ? `
-    <b>R$ ${brl(sobra)}</b>
-    <small>é o que sobra por dia até o fim do mês</small>
-    <hr style="border:0;border-top:1px solid var(--linha);margin:13px 0">
-    <b class="${media>sobra?'alerta':''}">R$ ${brl(media)}</b>
-    <small>foi sua média diária${media>sobra?` — <span class="alerta">acima do que dá pra manter</span>`:""}</small>
-  ` : `
-    <b>R$ ${brl(media)}</b>
-    <small>sua média diária neste mês</small>
-    <hr style="border:0;border-top:1px solid var(--linha);margin:13px 0">
-    <small>Defina um orçamento para ver quanto sobra por dia — é esse número que muda comportamento.</small>`;
 
   $("#cats").innerHTML = porCat.length ? porCat
     .sort((a,b)=>Number(b.gasto)-Number(a.gasto))
