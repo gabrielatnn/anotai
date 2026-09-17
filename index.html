@@ -399,8 +399,8 @@ dialog h3{font-size:17px;font-weight:700;margin-bottom:14px}
   <section id="conexao" hidden>
     <div class="conexao">
       <div class="card bloco" style="margin-bottom:12px">
-        <h2>Chave do Gemini</h2>
-        <p class="sub">Necessária para o botão Falar. Fica salva só neste navegador — nunca vai para o servidor.</p>
+        <h2>Chave do Gemini (opcional)</h2>
+        <p class="sub">O app já funciona sem isso. Cole uma chave só se quiser usar a sua própria cota e testar outros modelos — ela fica salva neste navegador.</p>
         <input id="chave" type="password" placeholder="cole a chave do Google AI Studio"
           style="width:100%;padding:10px 12px;border:1px solid var(--linha);background:var(--papel-2);
           border-radius:8px;font-size:14px;font-family:inherit;color:var(--tinta)">
@@ -887,7 +887,6 @@ async function carregarModelos(chave){
 let rec = null, pedacos = [], pendentes = [], transcricaoAtual = "", recemSalvos = [];
 
 $("#falar").onclick = () => {
-  if (!chaveGemini()) { abrirAba("conexao"); $("#chave").focus(); return; }
   pendentes = []; transcricaoAtual = "";
   $("#voz-res").innerHTML = "";
   $("#voz-salvar").style.display = "none";
@@ -982,45 +981,14 @@ async function ouvir(blob){
     const b64 = await paraBase64(blob);
     const mime = (blob.type || "audio/webm").split(";")[0];
 
-    // Uma chamada só. Transcrever e extrair em requisições separadas
-    // dobrava a espera sem melhorar o resultado.
-    const bruto = await gemini({
-      contents: [{ parts: [
-        { inline_data: { mime_type: mime, data: b64 } },
-        { text: promptVoz() },
-      ]}],
-      generationConfig: {
-        temperature: 0,
-        thinkingConfig: { thinkingLevel: "minimal" },
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: "OBJECT",
-          properties: {
-            transcricao: { type: "STRING" },
-            itens: {
-              type: "ARRAY",
-              items: {
-                type: "OBJECT",
-                properties: {
-                  valor:{type:"NUMBER"}, tipo:{type:"STRING",enum:["despesa","receita"]},
-                  descricao:{type:"STRING"}, estabelecimento:{type:"STRING",nullable:true},
-                  categoria:{type:"STRING"}, conta:{type:"STRING",nullable:true},
-                  data:{type:"STRING"}, confianca:{type:"NUMBER"},
-                },
-                required:["valor","descricao","categoria","confianca"],
-              },
-            },
-          },
-          required: ["transcricao", "itens"],
-        },
-      },
+    const bruto = await entender({
+      audio: b64, mime,
+      categorias: categorias.map(c => c.nome),
+      contas: contas.map(c => c.nome),
     });
 
-    let dados = {};
-    try { dados = JSON.parse(bruto ?? "{}"); } catch {}
-    transcricaoAtual = (dados.transcricao ?? "").trim();
-    pendentes = (Array.isArray(dados.itens) ? dados.itens : [])
-      .filter(i => typeof i.valor === "number" && i.valor > 0);
+    transcricaoAtual = (bruto.transcricao ?? "").trim();
+    pendentes = Array.isArray(bruto.itens) ? bruto.itens : [];
 
     if (!transcricaoAtual) {
       vozEstado(false, `<span class="erro">Não consegui ouvir. Tente de novo.</span>`);
@@ -1140,25 +1108,87 @@ function acharId(lista, nome){
   return achou?.id ?? null;
 }
 
-async function gemini(body, semPensamento = false){
-  if (semPensamento && body.generationConfig?.thinkingConfig) {
-    body = { ...body, generationConfig: { ...body.generationConfig, thinkingConfig: undefined } };
+// Por padrão o app fala com a Edge Function, que guarda a chave no servidor.
+// Quem colar uma chave própria em Ajustes passa a usar a dela — útil para
+// testar modelos sem consumir a cota compartilhada.
+async function entender(payload){
+  const chave = chaveGemini();
+  if (chave) return entenderComChavePropria(payload, chave);
+
+  const { data, error } = await db.functions.invoke("entender", { body: payload });
+  if (error) {
+    let msg = "Falha ao entender o áudio.";
+    try { msg = (await error.context?.json())?.erro ?? msg; } catch {}
+    throw new Error(msg);
   }
+  if (data?.erro) throw new Error(data.erro);
+  return data;
+}
+
+async function entenderComChavePropria(payload, chave){
+  const hojeStr = hoje();
+  const instrucoes = `${payload.audio
+    ? "Ouça o áudio e devolva DUAS coisas: a transcrição literal e os lançamentos financeiros que ela contém."
+    : "Leia a frase e devolva DUAS coisas: a própria frase em transcricao e os lançamentos que ela contém."}
+
+Hoje é ${hojeStr}, fuso America/Sao_Paulo.
+Categorias disponíveis: ${payload.categorias.join(", ")}
+Formas de pagamento: ${payload.contas.join(", ")}
+
+transcricao: exatamente o que foi dito, sem corrigir gramática. Vazio se não houver fala.
+
+itens: um por gasto ou receita mencionado. Vários numa frase = vários itens.
+- valor sempre positivo. "quarenta e cinco e noventa" = 45.90. "cinquenta pila" = 50.
+- tipo: "despesa" por padrão; "receita" quando for entrada.
+- descricao curta, do jeito que a pessoa fala.
+- estabelecimento só se citado; senão null.
+- categoria: a mais próxima da lista. Na dúvida, "Outros".
+- conta: da lista, ou null se não disser.
+- data: hoje, salvo se disser outra. NUNCA data futura: se disser só o dia e ele
+  ainda não chegou neste mês, use o mês ANTERIOR. Formato AAAA-MM-DD.
+- confianca: 0 a 1, o quanto você está seguro do VALOR.
+- Sem valor identificável, itens vazio. NUNCA invente valor.`;
+
   const r = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${modeloAtual()}:generateContent`,
-    { method:"POST", headers:{ "Content-Type":"application/json", "x-goog-api-key": chaveGemini() },
-      body: JSON.stringify(body) });
+    { method:"POST", headers:{ "Content-Type":"application/json", "x-goog-api-key": chave },
+      body: JSON.stringify({
+        contents: [{ parts: payload.audio
+          ? [{ inline_data:{ mime_type: payload.mime, data: payload.audio } }, { text: instrucoes }]
+          : [{ text: instrucoes }] }],
+        generationConfig: {
+          temperature: 0,
+          responseMimeType: "application/json",
+          responseSchema: {
+            type:"OBJECT",
+            properties:{
+              transcricao:{type:"STRING"},
+              itens:{type:"ARRAY",items:{type:"OBJECT",properties:{
+                valor:{type:"NUMBER"}, tipo:{type:"STRING",enum:["despesa","receita"]},
+                descricao:{type:"STRING"}, estabelecimento:{type:"STRING",nullable:true},
+                categoria:{type:"STRING"}, conta:{type:"STRING",nullable:true},
+                data:{type:"STRING"}, confianca:{type:"NUMBER"}},
+                required:["valor","descricao","categoria","confianca"]}},
+            },
+            required:["transcricao","itens"],
+          },
+        },
+      }) });
+
   if (!r.ok) {
-    const t = await r.text();
-    // modelos mais antigos não aceitam thinkingConfig
-    if (r.status === 400 && /thinking/i.test(t) && !semPensamento) return gemini(body, true);
-    if (r.status === 400 && /API key/i.test(t)) throw new Error("Chave do Gemini inválida.");
+    if (r.status === 400) throw new Error("Chave do Gemini inválida.");
     if (r.status === 404) throw new Error("Modelo indisponível. Escolha outro em Ajustes.");
-    if (r.status === 429) throw new Error("Cota do Gemini esgotada por hoje.");
+    if (r.status === 429) throw new Error("Cota da sua chave esgotada.");
     throw new Error(`Gemini ${r.status}`);
   }
   const j = await r.json();
-  return j?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+  const txt = j?.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}";
+  try {
+    const d = JSON.parse(txt);
+    return { transcricao: d.transcricao ?? "",
+             itens: (Array.isArray(d.itens) ? d.itens : [])
+               .filter(i => typeof i.valor === "number" && i.valor > 0) };
+  } catch { return { transcricao: "", itens: [] }; }
 }
 
 function paraBase64(blob){
