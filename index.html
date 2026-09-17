@@ -739,7 +739,8 @@ async function carregar(sentido){
   pintarFeed();
   pintarTabela();
   pintarOrcamento(orcs.data ?? []);
-  pintarContas(ocor.data ?? []);
+  ocorrencias = ocor.data ?? [];
+  pintarContas(ocorrencias);
   pintarConexao();
 }
 
@@ -1065,7 +1066,7 @@ document.addEventListener("change", async (e) => {
 });
 
 // ===================== CONTAS A PAGAR =====================
-let compromissos = [], editandoConta = null, quitando = null;
+let compromissos = [], ocorrencias = [], editandoConta = null, quitando = null;
 
 async function carregarCompromissos(){
   const { data } = await db.from("compromissos").select("*").eq("ativo", true).order("dia_vencimento");
@@ -1131,19 +1132,20 @@ $("#c-excluir").onclick = async () => {
 
 $("#q-cancelar").onclick = () => $("#dlg-quitar").close();
 
-function abrirQuitar(o){
+function abrirQuitar(o, valorFalado = null){
   quitando = o;
   $("#q-titulo").textContent = `Pagar ${o.nome}`;
   $("#q-sub").textContent = o.valor_previsto
     ? `Previsto: R$ ${brl(o.valor_previsto)} · vence ${o.vencimento.split("-").reverse().slice(0,2).join("/")}`
     : `Vence ${o.vencimento.split("-").reverse().slice(0,2).join("/")} · valor variável`;
-  $("#q-valor").value = o.valor_previsto ?? "";
+  $("#q-valor").value = valorFalado ?? o.valor_previsto ?? "";
   $("#q-data").value = hoje();
-  $("#q-conta").value = "";
+  $("#q-conta").value = o.conta_id ?? "";
   $("#q-diferenca").textContent = "";
   $("#erro-quitar").textContent = "";
   $("#dlg-quitar").showModal();
-  if (!o.valor_previsto) $("#q-valor").focus();
+  $("#q-valor").dispatchEvent(new Event("input"));
+  if (!$("#q-valor").value) $("#q-valor").focus();
 }
 
 // juros, multa ou desconto ficam visíveis antes de confirmar
@@ -1324,6 +1326,15 @@ async function ouvir(blob){
       return;
     }
 
+    // "paguei o aluguel" não tem valor na frase: o valor está na conta prevista.
+    const conta = acharOcorrencia(transcricaoAtual);
+    if (conta) {
+      const falado = pendentes[0]?.valor ?? null;
+      $("#dlg-voz").close();
+      abrirQuitar(conta, falado);
+      return;
+    }
+
     vozEstado(false, pendentes.length ? "Confira antes de salvar" : "Toque e fale de novo");
     $("#voz-res").innerHTML = `
       <div class="rot">Ouvi isto</div>
@@ -1349,6 +1360,27 @@ async function ouvir(blob){
     vozEstado(false, `<span class="erro">${e.message}</span>`);
   }
 }
+
+// Procura, entre as contas em aberto do mês, uma cujo nome apareça na frase.
+// Só reage a verbo de pagamento — "o aluguel tá caro" não deve abrir nada.
+function acharOcorrencia(frase){
+  const f = semAcento(frase);
+  if (!/\b(paguei|pago|quitei|quitado|pagamento|paguei o|transferi)\b/.test(f)) return null;
+
+  const abertas = ocorrencias.filter(o => !o.pago);
+  if (!abertas.length) return null;
+
+  // o nome mais específico ganha: "financiamento do carro" antes de "carro"
+  const achadas = abertas
+    .map(o => ({ o, n: semAcento(o.nome) }))
+    .filter(({ n }) => n.split(/\s+/).filter(p => p.length > 3).some(p => f.includes(p)))
+    .sort((a, b) => b.n.length - a.n.length);
+
+  return achadas[0]?.o ?? null;
+}
+
+const semAcento = t => String(t ?? "")
+  .normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
 function promptVoz(){
   return `Ouça o áudio e devolva DUAS coisas: a transcrição literal e os lançamentos financeiros que ela contém.
