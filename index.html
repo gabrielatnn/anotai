@@ -34,6 +34,7 @@ button,input,select{font-family:inherit}
 /* ---------- login ---------- */
 #login{min-height:100vh;display:grid;place-items:center;padding:20px}
 #login[hidden]{display:none}  /* o display:grid acima vence o atributo hidden sem isto */
+#bloco-chave[hidden]{display:none}
 .card-login{width:100%;max-width:360px}
 .card-login .marca{font-size:34px;font-weight:800;font-stretch:112%;letter-spacing:-.03em;margin-bottom:6px}
 .card-login p.sub{margin-bottom:24px}
@@ -398,7 +399,7 @@ dialog h3{font-size:17px;font-weight:700;margin-bottom:14px}
 
   <section id="conexao" hidden>
     <div class="conexao">
-      <div class="card bloco" style="margin-bottom:12px">
+      <div class="card bloco" id="bloco-chave" hidden style="margin-bottom:12px">
         <h2>Chave do Gemini (opcional)</h2>
         <p class="sub">O app já funciona sem isso. Cole uma chave só se quiser usar a sua própria cota e testar outros modelos — ela fica salva neste navegador.</p>
         <input id="chave" type="password" placeholder="cole a chave do Google AI Studio"
@@ -533,9 +534,17 @@ function traduz(m){
 const { data:{ session } } = await db.auth.getSession();
 if (session) iniciar();
 
+const DONO = "higorosaint@gmail.com";
+
 async function iniciar(){
   const { data:{ session } } = await db.auth.getSession();
   if (!session) { $("#erro-login").textContent = "Sessão não persistiu. Veja o console (F12)."; return; }
+
+  // O campo de chave é ferramenta de desenvolvimento: quem testa o app
+  // não precisa vê-lo, e uma chave alheia colada ali só geraria confusão.
+  const souDono = session.user?.email === DONO;
+  $("#bloco-chave").hidden = !souDono;
+  if (!souDono) localStorage.removeItem("gemini");
   $("#login").hidden = true;
   $("#app").hidden = false;
   document.querySelector(".acoes-fixas").style.visibility = "visible";
