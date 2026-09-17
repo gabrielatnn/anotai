@@ -84,6 +84,7 @@ h2{font-size:15px;font-weight:700;margin-bottom:2px}
 .metrica .n .cent{font-size:.58em;font-weight:700;color:var(--tinta-fraca)}
 .metrica .obs{font-size:12.5px;color:var(--tinta-fraca);margin-top:5px;line-height:1.35}
 .alerta{color:var(--vermelho)}
+.metrica .n.verde{color:var(--verde)}
 
 .faixa{margin-top:12px}
 .barra{height:10px;background:var(--papel-2);border:1px solid var(--linha);border-radius:99px;
@@ -169,7 +170,7 @@ tbody tr:hover{background:var(--papel-2)}
 
 /* pílula que desliza entre as abas */
 nav{position:relative}
-.pilula{position:absolute;top:0;height:calc(100% - 0px);background:var(--tinta);border-radius:8px;
+.pilula{position:absolute;top:0;left:0;background:var(--tinta);border-radius:8px;
   z-index:0;transition:transform .32s cubic-bezier(.4,0,.2,1),width .32s cubic-bezier(.4,0,.2,1);
   pointer-events:none;opacity:0}
 .pilula.on{opacity:1}
@@ -260,6 +261,8 @@ dialog h3{font-size:17px;font-weight:700;margin-bottom:14px}
 
 @media(max-width:860px){
   .metricas,.grid2{grid-template-columns:1fr;gap:10px}
+  .mes{gap:6px}
+  .sair{margin-left:10px}
   .col-cat{order:-1}
   th.esconde,td.esconde{display:none}
 }
@@ -616,38 +619,52 @@ function crescerBarras(raiz){
 }
 
 function pintarPainel(r, porCat){
-  const gasto = Number(r?.gasto ?? 0), orc = Number(r?.orcamento ?? 0);
-  const sobra = Number(r?.sobra_por_dia ?? 0), media = Number(r?.media_diaria ?? 0);
-  const dias  = Number(r?.dias_restantes ?? 0);
-  const acima = orc && media > sobra;
+  const receita = Number(r?.receita ?? 0);
+  const gasto   = Number(r?.gasto ?? 0);
+  const saldo   = Number(r?.saldo ?? 0);
+  const orc     = Number(r?.orcamento ?? 0);
+  const sobra   = Number(r?.sobra_por_dia ?? 0);
+  const media   = Number(r?.media_diaria ?? 0);
+  const dias    = Number(r?.dias_restantes ?? 0);
+  const base    = r?.base_sobra ?? "nenhuma";
+  const temSaldo = receita > 0;
 
   $("#metricas").innerHTML = `
-    <div class="card metrica destaque">
-      <div class="rot">Gasto no mês</div>
+    <div class="card metrica">
+      <div class="rot">Entrou</div>
+      <div class="n verde">${dinheiro(receita)}</div>
+      <div class="obs">${receita ? "receitas do mês" : "nenhuma entrada registrada"}</div>
+    </div>
+    <div class="card metrica">
+      <div class="rot">Saiu</div>
       <div class="n">${dinheiro(gasto)}</div>
-      <div class="obs">${orc ? `de R$ ${brl(orc)} orçados` : "sem orçamento definido"}</div>
+      <div class="obs">${orc ? `de R$ ${brl(orc)} orçados` : `média de R$ ${brl(media)} por dia`}</div>
     </div>
-    <div class="card metrica">
-      <div class="rot">Média diária</div>
-      <div class="n ${acima?'alerta':''}">${dinheiro(media)}</div>
-      <div class="obs">${acima ? "acima do que dá pra manter" : "no mês corrente"}</div>
-    </div>
-    <div class="card metrica">
-      <div class="rot">Sobra por dia</div>
-      <div class="n">${orc ? dinheiro(sobra) : '<span style="color:var(--tinta-fraca)">—</span>'}</div>
-      <div class="obs">${orc ? `nos ${dias} dias restantes` : "defina um orçamento para ver"}</div>
+    <div class="card metrica destaque">
+      <div class="rot">Saldo</div>
+      <div class="n ${saldo < 0 ? "alerta" : saldo > 0 ? "verde" : ""}">
+        ${temSaldo ? dinheiro(saldo) : `<span style="color:var(--tinta-fraca)">—</span>`}
+      </div>
+      <div class="obs">${
+        !temSaldo ? "registre o que entra para ver o saldo"
+        : base === "nenhuma" ? "entrou menos saiu"
+        : `sobram R$ ${brl(sobra)} por dia nos ${dias} dias restantes`}</div>
     </div>`;
 
-  const base = orc || gasto || 1;
+  document.querySelectorAll("#metricas [data-conta]").forEach(el =>
+    contar(el, Number(el.dataset.conta)));
+
+  const teto = orc || receita || gasto || 1;
   $("#barra-mes").innerHTML = porCat
-    .map(c => `<i style="width:${Math.min(Number(c.gasto)/base*100,100)}%;background:${c.categoria_cor}" title="${c.categoria}"></i>`)
+    .map(c => `<i style="width:${Math.min(Number(c.gasto)/teto*100,100)}%;background:${c.categoria_cor}" title="${c.categoria}"></i>`)
     .join("");
 
   document.querySelectorAll("#metricas [data-conta]").forEach(el =>
     contar(el, Number(el.dataset.conta)));
 
-  $("#legenda").innerHTML = orc
-    ? `<span>${porCat.length} categoria${porCat.length===1?"":"s"} com gasto</span><span>${Math.round(gasto/orc*100)}% do orçamento usado</span>`
+  $("#legenda").innerHTML = (orc || receita)
+    ? `<span>${porCat.length} categoria${porCat.length===1?"":"s"} com gasto</span>
+       <span>${Math.round(gasto/(orc||receita)*100)}% ${orc ? "do orçamento" : "do que entrou"}</span>`
     : `<span>A barra mostra a divisão por categoria</span><span><a href="#" id="ir-orc">definir orçamento</a></span>`;
   const ir = $("#ir-orc");
   if (ir) ir.onclick = (e) => { e.preventDefault(); abrirAba("orcamento"); };
@@ -1161,9 +1178,9 @@ document.querySelector("nav").prepend(pilula);
 function moverPilula(){
   const ativa = document.querySelector('nav [role="tab"][aria-selected="true"]');
   if (!ativa) return;
-  pilula.style.width = `${ativa.offsetWidth}px`;
+  pilula.style.width  = `${ativa.offsetWidth}px`;
   pilula.style.height = `${ativa.offsetHeight}px`;
-  pilula.style.transform = `translateX(${ativa.offsetLeft}px)`;
+  pilula.style.transform = `translate(${ativa.offsetLeft}px, ${ativa.offsetTop}px)`;
   pilula.classList.add("on");
 }
 
@@ -1174,6 +1191,10 @@ function abrirAba(id){
 }
 abas.forEach(b => b.onclick = () => abrirAba(b.dataset.aba));
 addEventListener("resize", moverPilula);
+// A Archivo chega depois do primeiro layout e muda a largura dos botões:
+// sem recalcular aqui, a pílula fica com a medida da fonte de sistema.
+document.fonts?.ready.then(moverPilula);
+new ResizeObserver(moverPilula).observe(document.querySelector("nav"));
 requestAnimationFrame(moverPilula);
 
 $("#mes-ant").onclick  = () => { mes = new Date(mes.getFullYear(), mes.getMonth()-1, 1); carregar("dir"); };
