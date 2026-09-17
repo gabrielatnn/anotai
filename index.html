@@ -155,7 +155,7 @@ tbody tr:hover{background:var(--papel-2)}
 #falar{background:var(--tinta);border-color:var(--tinta);color:var(--papel-2)}
 #falar:hover{background:#000;color:var(--papel-2)}
 
-#dlg-voz{width:min(440px,94vw)}
+#dlg-voz{width:min(440px,94vw);margin:auto}
 .palco{text-align:center;padding:10px 0 4px}
 #gravar{width:118px;height:118px;border-radius:50%;border:0;background:var(--verde);color:#fff;
   font-size:40px;cursor:pointer;transition:transform .18s,background .18s;
@@ -183,7 +183,7 @@ tbody tr:hover{background:var(--papel-2)}
 
 /* ---------- modal ---------- */
 dialog{border:1px solid var(--linha);border-radius:14px;background:var(--papel);color:var(--tinta);
-  padding:22px;width:min(420px,92vw)}
+  padding:22px;width:min(420px,92vw);margin:auto;max-height:88dvh;overflow-y:auto}
 dialog::backdrop{background:rgba(27,29,26,.45)}
 dialog h3{font-size:17px;font-weight:700;margin-bottom:14px}
 .linha2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -197,8 +197,53 @@ dialog h3{font-size:17px;font-weight:700;margin-bottom:14px}
   .metricas,.grid2{grid-template-columns:1fr;gap:10px}
   .col-cat{order:-1}
   th.esconde,td.esconde{display:none}
-  #falar,#novo{margin-left:0!important;flex:1;margin-top:8px}
 }
+
+@media(max-width:620px){
+  body{font-size:15px}
+  .wrap{padding:0 14px 40px}
+  header{padding:18px 0 12px;gap:8px}
+  .marca{font-size:22px}
+  .mes{width:100%;margin-left:0;justify-content:space-between}
+  .mes span{min-width:auto;flex:1}
+  .sair{margin-left:8px}
+
+  /* abas roláveis, ações fixas embaixo */
+  nav{margin:12px -14px 16px;padding:0 14px;overflow-x:auto;flex-wrap:nowrap;
+    scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  nav::-webkit-scrollbar{display:none}
+  nav button{flex:0 0 auto;white-space:nowrap}
+  #falar,#novo{display:none}
+
+  .acoes-fixas{position:fixed;left:0;right:0;bottom:0;display:flex;gap:8px;
+    padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+    background:linear-gradient(to top,var(--papel) 72%,transparent);z-index:40}
+  .acoes-fixas button{flex:1;padding:14px;border-radius:12px;font-size:15px;font-weight:700;
+    border:1px solid var(--linha);cursor:pointer;font-family:inherit}
+  .acoes-fixas #falar-m{background:var(--tinta);color:var(--papel-2);border-color:var(--tinta)}
+  .acoes-fixas #novo-m{background:var(--verde);color:#fff;border-color:var(--verde)}
+  .wrap{padding-bottom:96px}
+
+  .card{padding:16px}
+  .metrica.destaque .n{font-size:34px}
+  .metrica .n{font-size:26px}
+
+  /* modais como folha inferior: mais fácil de alcançar com o polegar */
+  dialog,#dlg-voz{width:100%;max-width:100%;margin:auto auto 0;border-radius:18px 18px 0 0;
+    padding:20px 18px calc(20px + env(safe-area-inset-bottom));max-height:92dvh}
+  dialog::backdrop{background:rgba(27,29,26,.5)}
+  .linha2{grid-template-columns:1fr}
+  #gravar{width:104px;height:104px;font-size:36px}
+  .rodape{position:sticky;bottom:0;background:var(--papel);padding-top:12px;margin-top:16px}
+  .rodape .btn{padding:14px}
+  .campo input,.campo select{font-size:16px}  /* evita o zoom automático do iOS */
+}
+
+@media(max-width:620px) and (display-mode:browser){
+  .acoes-fixas{display:flex}
+}
+.acoes-fixas{display:none}
+@media(max-width:620px){.acoes-fixas{display:flex}}
 </style>
 </head>
 <body>
@@ -315,6 +360,11 @@ dialog h3{font-size:17px;font-weight:700;margin-bottom:14px}
   </div>
 </dialog>
 
+<div class="acoes-fixas" style="visibility:hidden">
+  <button id="falar-m">🎤 Falar</button>
+  <button id="novo-m">+ Lançar</button>
+</div>
+
 <!-- ================= MODAL ================= -->
 <dialog id="dlg">
   <h3 id="dlg-titulo">Novo lançamento</h3>
@@ -415,6 +465,7 @@ async function iniciar(){
   if (!session) { $("#erro-login").textContent = "Sessão não persistiu. Veja o console (F12)."; return; }
   $("#login").hidden = true;
   $("#app").hidden = false;
+  document.querySelector(".acoes-fixas").style.visibility = "visible";
   const [c1, c2] = await Promise.all([
     db.from("categorias").select("id, nome, cor, tipo").eq("ativo", true).order("ordem"),
     db.from("contas").select("id, nome").eq("ativo", true),
@@ -604,6 +655,8 @@ document.addEventListener("click", async (e) => {
 });
 
 $("#novo").onclick = () => abrirModal(null);
+$("#novo-m").onclick = () => abrirModal(null);
+$("#falar-m").onclick = () => $("#falar").click();
 $("#cancelar").onclick = () => $("#dlg").close();
 
 function abrirModal(t){
