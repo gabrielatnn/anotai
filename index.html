@@ -43,12 +43,12 @@ header{display:flex;align-items:center;gap:14px;padding:24px 0 16px;border-botto
 .marca{font-size:26px;font-weight:800;font-stretch:112%;letter-spacing:-.02em}
 .marca span{color:var(--verde)}
 .mes{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:14.5px;font-weight:600}
-.mes span{min-width:130px;text-align:center;text-transform:capitalize}
+.mes span{min-width:128px;text-align:center;flex-shrink:0}
 .mes button{border:1px solid var(--linha);background:var(--papel-2);color:var(--tinta);
   width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:15px;line-height:1}
 .mes button:hover{border-color:var(--tinta)}
 .sair{background:none;border:0;color:var(--tinta-fraca);font-size:13px;cursor:pointer;
-  margin-left:14px;padding:4px 2px}
+  margin-left:16px;padding:4px 0;flex-shrink:0}
 .sair:hover{color:var(--tinta)}
 
 nav{display:flex;gap:4px;margin:18px 0 22px;flex-wrap:wrap;align-items:center}
@@ -56,7 +56,7 @@ nav button{font-size:14px;font-weight:600;padding:7px 14px;border:1px solid tran
   background:transparent;color:var(--tinta-fraca);cursor:pointer;border-radius:8px}
 nav button:hover{background:var(--papel-2);color:var(--tinta)}
 nav button[aria-selected="true"]{background:var(--tinta);border-color:var(--tinta);color:var(--papel-2)}
-#novo{margin-left:auto;background:var(--verde);border-color:var(--verde);color:#fff}
+#novo{background:var(--verde);border-color:var(--verde);color:#fff}
 #novo:hover{background:#3F7349;color:#fff}
 
 section[hidden]{display:none}
@@ -151,6 +151,36 @@ tbody tr:hover{background:var(--papel-2)}
 .passo small{display:block;font-size:13px;color:var(--tinta-fraca);margin-top:3px}
 .ok{background:#DCEBD8;border:1px solid #BCD6B6;border-radius:var(--raio);padding:14px 16px;font-size:14.5px}
 
+/* ---------- voz ---------- */
+#falar{background:var(--tinta);border-color:var(--tinta);color:var(--papel-2)}
+#falar:hover{background:#000;color:var(--papel-2)}
+
+#dlg-voz{width:min(440px,94vw)}
+.palco{text-align:center;padding:10px 0 4px}
+#gravar{width:118px;height:118px;border-radius:50%;border:0;background:var(--verde);color:#fff;
+  font-size:40px;cursor:pointer;transition:transform .18s,background .18s;
+  box-shadow:0 6px 18px rgba(78,138,91,.28)}
+#gravar:hover{transform:scale(1.05)}
+#gravar.rec{background:var(--vermelho);box-shadow:0 6px 18px rgba(181,72,74,.3);
+  animation:pulsa 1.3s infinite}
+#gravar.pensando{background:var(--tinta-fraca);cursor:default;animation:none;box-shadow:none}
+@keyframes pulsa{0%,100%{box-shadow:0 0 0 0 rgba(181,72,74,.45)}70%{box-shadow:0 0 0 22px rgba(181,72,74,0)}}
+#voz-estado{font-size:14.5px;color:var(--tinta-fraca);margin-top:14px;min-height:21px}
+#voz-res{margin-top:18px;text-align:left}
+.rot{font-size:11.5px;font-weight:700;color:var(--tinta-fraca);text-transform:uppercase;
+  letter-spacing:.06em;margin-bottom:7px}
+.trans{font-style:italic;font-size:14.5px;padding:11px 14px;background:var(--papel-2);
+  border:1px dashed var(--linha);border-radius:9px;margin-bottom:16px}
+.prev{background:var(--papel-2);border:1px solid var(--linha);border-left:3px solid var(--verde);
+  border-radius:9px;padding:12px 14px;margin-bottom:8px}
+.prev.baixa{border-left-color:var(--vermelho)}
+.prev .topo{display:flex;align-items:baseline;gap:10px}
+.prev .d{font-weight:700;font-size:15px}
+.prev .v{margin-left:auto;font-weight:800;font-size:17px}
+.prev.baixa .v{color:var(--vermelho)}
+.prev .m{font-size:12.5px;color:var(--tinta-fraca);margin-top:5px;display:flex;gap:7px;flex-wrap:wrap}
+.aviso{color:var(--vermelho);font-weight:600}
+
 /* ---------- modal ---------- */
 dialog{border:1px solid var(--linha);border-radius:14px;background:var(--papel);color:var(--tinta);
   padding:22px;width:min(420px,92vw)}
@@ -167,7 +197,7 @@ dialog h3{font-size:17px;font-weight:700;margin-bottom:14px}
   .metricas,.grid2{grid-template-columns:1fr;gap:10px}
   .col-cat{order:-1}
   th.esconde,td.esconde{display:none}
-  #novo{margin-left:0;width:100%;margin-top:8px}
+  #falar,#novo{margin-left:0!important;flex:1;margin-top:8px}
 }
 </style>
 </head>
@@ -202,8 +232,9 @@ dialog h3{font-size:17px;font-weight:700;margin-bottom:14px}
     <button role="tab" aria-selected="true" data-aba="painel">Painel</button>
     <button role="tab" aria-selected="false" data-aba="lancamentos">Lançamentos</button>
     <button role="tab" aria-selected="false" data-aba="orcamento">Orçamento</button>
-    <button role="tab" aria-selected="false" data-aba="conexao">Meu WhatsApp</button>
-    <button id="novo">+ Lançar</button>
+    <button role="tab" aria-selected="false" data-aba="conexao">Ajustes</button>
+    <button id="falar" style="margin-left:auto">🎤 Falar</button>
+    <button id="novo" style="margin-left:4px">+ Lançar</button>
   </nav>
 
   <section id="painel">
@@ -252,12 +283,37 @@ dialog h3{font-size:17px;font-weight:700;margin-bottom:14px}
 
   <section id="conexao" hidden>
     <div class="conexao">
-      <h2>Conectar seu WhatsApp</h2>
-      <p class="sub">Seu número vira sua identificação. Depois de conectado, é só falar.</p>
-      <div id="conexao-corpo"></div>
+      <div class="card bloco" style="margin-bottom:12px">
+        <h2>Chave do Gemini</h2>
+        <p class="sub">Necessária para o botão Falar. Fica salva só neste navegador — nunca vai para o servidor.</p>
+        <input id="chave" type="password" placeholder="cole a chave do Google AI Studio"
+          style="width:100%;padding:10px 12px;border:1px solid var(--linha);background:var(--papel-2);
+          border-radius:8px;font-size:14px;font-family:inherit;color:var(--tinta)">
+        <select id="modelo" style="width:100%;margin-top:8px;padding:10px 12px;border:1px solid var(--linha);
+          background:var(--papel-2);border-radius:8px;font-size:14px;font-family:inherit;color:var(--tinta)">
+          <option value="">— modelos aparecem ao colar a chave —</option>
+        </select>
+      </div>
+      <div class="card bloco">
+        <h2>WhatsApp</h2>
+        <p class="sub">Em breve. Quando o canal estiver ativo, este código conecta seu número.</p>
+        <div id="conexao-corpo"></div>
+      </div>
     </div>
   </section>
 </div>
+
+<dialog id="dlg-voz">
+  <div class="palco">
+    <button id="gravar" title="Gravar">🎤</button>
+    <div id="voz-estado">Toque e fale seu gasto</div>
+  </div>
+  <div id="voz-res"></div>
+  <div class="rodape">
+    <button class="btn sec" id="voz-fechar">Fechar</button>
+    <button class="btn" id="voz-salvar" style="display:none">Salvar</button>
+  </div>
+</dialog>
 
 <!-- ================= MODAL ================= -->
 <dialog id="dlg">
@@ -380,7 +436,8 @@ function montarSelects(){
 
 // ===================== CARREGAR MÊS =====================
 async function carregar(){
-  $("#mes-rot").textContent = mes.toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
+  const rot = mes.toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
+  $("#mes-rot").textContent = rot.charAt(0).toUpperCase() + rot.slice(1);
   $("#feed").innerHTML = `<div class="carregando">Carregando…</div>`;
 
   const [resumo, porCat, lista, orcs] = await Promise.all([
@@ -437,17 +494,18 @@ function pintarPainel(r, porCat){
   const ir = $("#ir-orc");
   if (ir) ir.onclick = (e) => { e.preventDefault(); abrirAba("orcamento"); };
 
+  const totalCat = porCat.reduce((a,c)=>a+Number(c.gasto),0) || 1;
   $("#cats").innerHTML = porCat.length ? porCat
     .sort((a,b)=>Number(b.gasto)-Number(a.gasto))
     .map(c => {
       const g = Number(c.gasto), o = Number(c.orcamento);
-      const pct = o ? g/o*100 : 100, estourou = o && g>o;
+      const pct = o ? g/o*100 : g/totalCat*100, estourou = o && g>o;
       return `<div class="cat-linha" style="--cor:${c.categoria_cor}">
         <span class="cat-nome">${c.categoria}</span>
         <span class="cat-val">R$ ${brl(g)}</span>
         <div class="cat-barra"><i style="width:${Math.min(pct,100)}%"></i></div>
         <span class="cat-obs ${estourou?'estouro':''}">${
-          !o ? `${c.lancamentos} lançamento${c.lancamentos>1?"s":""}`
+          !o ? `${Math.round(g/totalCat*100)}% dos gastos · ${c.lancamentos} lançamento${c.lancamentos>1?"s":""}`
              : estourou ? `passou R$ ${brl(g-o)} do orçamento`
                         : `restam R$ ${brl(o-g)} de R$ ${brl(o)}`}</span>
       </div>`;
@@ -599,6 +657,250 @@ document.addEventListener("change", async (e) => {
   inp.style.borderColor = "var(--verde)";
   setTimeout(() => inp.style.borderColor = "", 900);
 });
+
+// ===================== VOZ =====================
+// Mesmo caminho do bot: transcreve fiel, extrai estruturado, grava.
+// A chave fica no navegador do usuário, nunca no código publicado.
+
+const chaveGemini = () => localStorage.getItem("gemini") ?? "";
+const modeloAtual = () => localStorage.getItem("modelo") || "gemini-flash-latest";
+
+$("#chave").value = chaveGemini();
+if (chaveGemini()) carregarModelos(chaveGemini());
+let tmr;
+$("#chave").oninput = e => {
+  const v = e.target.value.trim();
+  localStorage.setItem("gemini", v);
+  clearTimeout(tmr);
+  if (v) tmr = setTimeout(() => carregarModelos(v), 600);
+};
+
+// Nomes de modelo mudam e os antigos são aposentados: a lista vem da API.
+async function carregarModelos(chave){
+  try {
+    const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models",
+      { headers: { "x-goog-api-key": chave } });
+    if (!r.ok) return;
+    const { models = [] } = await r.json();
+    const uteis = models
+      .filter(m => (m.supportedGenerationMethods ?? []).includes("generateContent"))
+      .map(m => m.name.replace("models/", ""))
+      .filter(n => /flash|pro/.test(n) && !/tts|image|audio-dialog|embedding|video/.test(n))
+      .sort();
+    if (!uteis.length) return;
+    const pref = localStorage.getItem("modelo")
+      ?? uteis.find(n => /flash-lite/.test(n)) ?? uteis.find(n => /flash/.test(n)) ?? uteis[0];
+    $("#modelo").innerHTML = uteis
+      .map(n => `<option value="${n}" ${n === pref ? "selected" : ""}>${n}</option>`).join("");
+    localStorage.setItem("modelo", pref);
+    $("#modelo").onchange = e => localStorage.setItem("modelo", e.target.value);
+  } catch {}
+}
+
+let rec = null, pedacos = [], pendentes = [], transcricaoAtual = "";
+
+$("#falar").onclick = () => {
+  if (!chaveGemini()) { abrirAba("conexao"); $("#chave").focus(); return; }
+  pendentes = []; transcricaoAtual = "";
+  $("#voz-res").innerHTML = "";
+  $("#voz-salvar").style.display = "none";
+  vozEstado(false, "Toque e fale seu gasto");
+  $("#dlg-voz").showModal();
+};
+
+$("#voz-fechar").onclick = () => { if (rec?.state === "recording") rec.stop(); $("#dlg-voz").close(); };
+
+$("#gravar").onclick = async () => {
+  if (rec?.state === "recording") { rec.stop(); return; }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    pedacos = [];
+    rec = new MediaRecorder(stream);
+    rec.ondataavailable = e => pedacos.push(e.data);
+    rec.onstop = () => {
+      stream.getTracks().forEach(t => t.stop());
+      $("#gravar").classList.remove("rec");
+      $("#gravar").textContent = "🎤";
+      ouvir(new Blob(pedacos, { type: rec.mimeType }));
+    };
+    rec.start();
+    $("#gravar").classList.add("rec");
+    $("#gravar").textContent = "■";
+    $("#voz-estado").textContent = "gravando… toque para parar";
+  } catch {
+    $("#voz-estado").innerHTML = `<span class="erro">Precisa permitir o microfone.</span>`;
+  }
+};
+
+function vozEstado(ocupado, msg){
+  const b = $("#gravar");
+  b.classList.toggle("pensando", ocupado);
+  b.disabled = ocupado;
+  b.textContent = ocupado ? "⋯" : "🎤";
+  $("#voz-estado").innerHTML = msg;
+}
+
+async function ouvir(blob){
+  vozEstado(true, "ouvindo…");
+  $("#voz-res").innerHTML = "";
+  $("#voz-salvar").style.display = "none";
+  try {
+    const b64 = await paraBase64(blob);
+    const mime = (blob.type || "audio/webm").split(";")[0];
+
+    transcricaoAtual = (await gemini({
+      contents: [{ parts: [
+        { inline_data: { mime_type: mime, data: b64 } },
+        { text: "Transcreva este áudio em português do Brasil, literalmente, sem corrigir gramática e sem comentar. Se não houver fala audível, responda apenas: VAZIO" },
+      ]}],
+      generationConfig: { temperature: 0 },
+    })).trim();
+
+    if (!transcricaoAtual || transcricaoAtual === "VAZIO") {
+      vozEstado(false, `<span class="erro">Não consegui ouvir. Tente de novo.</span>`);
+      return;
+    }
+
+    vozEstado(true, "entendendo…");
+    pendentes = await extrairVoz(transcricaoAtual);
+    vozEstado(false, pendentes.length ? "Confira antes de salvar" : "Toque e fale de novo");
+
+    $("#voz-res").innerHTML = `
+      <div class="rot">Ouvi isto</div>
+      <div class="trans">"${transcricaoAtual}"</div>
+      ${pendentes.length ? `<div class="rot">E entendi assim</div>` + pendentes.map(i => `
+        <div class="prev ${i.confianca < 0.7 ? "baixa" : ""}">
+          <div class="topo">
+            <span class="d">${i.descricao}</span>
+            <span class="v">${i.tipo === "receita" ? "+" : ""}R$ ${brl(i.valor)}</span>
+          </div>
+          <div class="m">
+            <span class="tag">${i.categoria}</span>
+            ${i.conta ? `<span class="tag">${i.conta}</span>` : ""}
+            <span>${i.data.split("-").reverse().slice(0,2).join("/")}</span>
+            ${i.confianca < 0.7 ? `<span class="aviso">confira o valor</span>` : ""}
+          </div>
+        </div>`).join("")
+        : `<div class="erro">Nenhum valor identificado nessa frase.</div>`}`;
+
+    $("#voz-salvar").style.display = pendentes.length ? "block" : "none";
+  } catch (e) {
+    console.error(e);
+    vozEstado(false, `<span class="erro">${e.message}</span>`);
+  }
+}
+
+async function extrairVoz(texto){
+  const cats = categorias.map(c => c.nome).join(", ");
+  const cons = contas.map(c => c.nome).join(", ");
+  const prompt = `Você extrai lançamentos financeiros de frases faladas por brasileiros.
+
+Hoje é ${hoje()}, fuso America/Sao_Paulo.
+Categorias disponíveis: ${cats}
+Formas de pagamento: ${cons}
+
+Regras:
+- Devolva um ARRAY com um item por gasto ou receita mencionado. Vários numa frase = vários itens.
+- valor sempre positivo. "quarenta e cinco e noventa" = 45.90. "cinquenta pila" = 50. "duzentos conto" = 200.
+- tipo: "despesa" por padrão; "receita" quando for entrada (recebi, caiu, me pagaram).
+- descricao curta, do jeito que a pessoa fala.
+- estabelecimento só se citado; senão null.
+- categoria: a mais próxima da lista. Na dúvida, "Outros".
+- conta: da lista, ou null se não disser.
+- data: hoje, salvo se a pessoa disser outra ("ontem", "sexta passada", "dia 3").
+  NUNCA devolva data futura. Se a pessoa disser só o dia ("dia 20") e esse dia
+  ainda não chegou neste mês, use o mesmo dia do mês ANTERIOR — gasto já aconteceu.
+  Só aceite data futura se a frase deixar claro que é futura ("vou pagar dia 20",
+  "vence mês que vem"). Formato AAAA-MM-DD.
+- confianca: 0 a 1, o quanto você está seguro do VALOR.
+- Sem valor identificável, array vazio. NUNCA invente valor.
+
+Frase: "${texto}"`;
+
+  const bruto = await gemini({
+    contents: [{ parts: [{ text: prompt }] }],
+    generationConfig: {
+      temperature: 0,
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: "ARRAY",
+        items: {
+          type: "OBJECT",
+          properties: {
+            valor:{type:"NUMBER"}, tipo:{type:"STRING",enum:["despesa","receita"]},
+            descricao:{type:"STRING"}, estabelecimento:{type:"STRING",nullable:true},
+            categoria:{type:"STRING"}, conta:{type:"STRING",nullable:true},
+            data:{type:"STRING"}, confianca:{type:"NUMBER"},
+          },
+          required:["valor","descricao","categoria","confianca"],
+        },
+      },
+    },
+  });
+
+  try {
+    const itens = JSON.parse(bruto ?? "[]");
+    return (Array.isArray(itens) ? itens : []).filter(i => typeof i.valor === "number" && i.valor > 0);
+  } catch { return []; }
+}
+
+$("#voz-salvar").onclick = async () => {
+  const { data:{ user } } = await db.auth.getUser();
+  const linhas = pendentes.map(i => ({
+    user_id: user.id,
+    tipo: i.tipo ?? "despesa",
+    valor: i.valor,
+    descricao: i.descricao,
+    estabelecimento: i.estabelecimento ?? null,
+    categoria_id: acharId(categorias, i.categoria),
+    conta_id: acharId(contas, i.conta),
+    data: i.data ?? hoje(),
+    origem: "audio",
+    texto_original: transcricaoAtual,
+    confianca: i.confianca,
+    revisado: false,
+  }));
+
+  const { error } = await db.from("transacoes").insert(linhas);
+  if (error) { vozEstado(false, `<span class="erro">${error.message}</span>`); return; }
+
+  $("#dlg-voz").close();
+  await carregar();
+};
+
+// O modelo devolve nome, o banco quer id. Compara sem acento e sem caixa.
+function acharId(lista, nome){
+  if (!nome) return null;
+  const n = String(nome).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+  const achou = lista.find(i =>
+    i.nome.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim() === n);
+  return achou?.id ?? null;
+}
+
+async function gemini(body){
+  const r = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${modeloAtual()}:generateContent`,
+    { method:"POST", headers:{ "Content-Type":"application/json", "x-goog-api-key": chaveGemini() },
+      body: JSON.stringify(body) });
+  if (!r.ok) {
+    const t = await r.text();
+    if (r.status === 400 && /API key/i.test(t)) throw new Error("Chave do Gemini inválida.");
+    if (r.status === 404) throw new Error("Modelo indisponível. Escolha outro em Ajustes.");
+    if (r.status === 429) throw new Error("Cota do Gemini esgotada por hoje.");
+    throw new Error(`Gemini ${r.status}`);
+  }
+  const j = await r.json();
+  return j?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+}
+
+function paraBase64(blob){
+  return new Promise((ok, falhou) => {
+    const fr = new FileReader();
+    fr.onload = () => ok(fr.result.split(",")[1]);
+    fr.onerror = () => falhou(new Error("Falha ao ler o áudio."));
+    fr.readAsDataURL(blob);
+  });
+}
 
 // ===================== NAVEGAÇÃO =====================
 const abas = document.querySelectorAll('nav [role="tab"]');
