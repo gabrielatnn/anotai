@@ -214,6 +214,32 @@ nav [role=tab][aria-selected=true]{background:transparent;border-color:transpare
 .skel-bloco{border:1px solid var(--linha);border-left:3px solid var(--linha);border-radius:9px;
   padding:13px 14px;margin-bottom:8px}
 
+/* ---------- contas ---------- */
+.conta-linha{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;
+  padding:13px 0;border-bottom:1px solid var(--linha)}
+.conta-linha:last-child{border-bottom:0}
+.marca-venc{width:42px;height:42px;border-radius:10px;background:var(--papel);
+  border:1px solid var(--linha);display:grid;place-items:center;line-height:1;flex:none}
+.marca-venc b{font-size:15px;font-weight:800;display:block}
+.marca-venc small{font-size:9.5px;color:var(--tinta-fraca);text-transform:uppercase;letter-spacing:.04em}
+.conta-linha.vencida .marca-venc{border-color:var(--vermelho);background:#F6E9E9}
+.conta-linha.vencida .marca-venc b{color:var(--vermelho)}
+.conta-linha.paga{opacity:.55}
+.conta-nome{font-weight:600;font-size:15px}
+.conta-meta{font-size:12.5px;color:var(--tinta-fraca);margin-top:2px;display:flex;gap:7px;flex-wrap:wrap}
+.conta-val{text-align:right;white-space:nowrap}
+.conta-val b{font-size:15.5px;font-weight:700;display:block}
+.conta-val button{margin-top:5px;font-size:12px;font-weight:600;padding:4px 11px;
+  border:1px solid var(--verde);background:var(--verde);color:#fff;border-radius:6px;
+  cursor:pointer;font-family:inherit}
+.conta-val button:hover{background:#3F7349}
+.conta-val .quitado{font-size:12px;color:var(--verde);font-weight:600}
+.venc-tag{color:var(--vermelho);font-weight:600}
+
+.metrica .n.pequeno{font-size:22px}
+.projetado{border-top:1px solid var(--linha);margin-top:11px;padding-top:11px}
+.projetado .rot{margin-bottom:3px}
+
 /* ---------- voz ---------- */
 #falar{background:var(--tinta);border-color:var(--tinta);color:var(--papel-2)}
 #falar:hover{background:#000;color:var(--papel-2)}
@@ -347,6 +373,7 @@ dialog h3{font-size:17px;font-weight:700;margin-bottom:14px}
   <nav role="tablist">
     <button role="tab" aria-selected="true" data-aba="painel">Painel</button>
     <button role="tab" aria-selected="false" data-aba="lancamentos">Lançamentos</button>
+    <button role="tab" aria-selected="false" data-aba="contas">Contas</button>
     <button role="tab" aria-selected="false" data-aba="orcamento">Orçamento</button>
     <button role="tab" aria-selected="false" data-aba="conexao">Ajustes</button>
     <button id="falar" style="margin-left:auto">🎤 Falar</button>
@@ -389,6 +416,18 @@ dialog h3{font-size:17px;font-weight:700;margin-bottom:14px}
       </tr></thead>
       <tbody id="tabela"></tbody>
     </table>
+  </section>
+
+  <section id="contas" hidden>
+    <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+      <div>
+        <h2>Contas do mês</h2>
+        <p class="sub" id="contas-resumo">—</p>
+      </div>
+      <button class="btn" id="nova-conta"
+        style="width:auto;margin-left:auto;padding:9px 16px;font-size:14px">+ Nova conta</button>
+    </div>
+    <div class="card" id="lista-contas" style="max-width:640px"></div>
   </section>
 
   <section id="orcamento" hidden>
@@ -438,6 +477,61 @@ dialog h3{font-size:17px;font-weight:700;margin-bottom:14px}
   <button id="falar-m">🎤 Falar</button>
   <button id="novo-m">+ Lançar</button>
 </div>
+
+<dialog id="dlg-conta">
+  <h3 id="dlg-conta-titulo">Nova conta</h3>
+  <div class="campo"><label for="c-nome">Nome</label>
+    <input id="c-nome" type="text" placeholder="Aluguel, Luz, Financiamento do carro"></div>
+  <div class="linha2">
+    <div class="campo"><label for="c-valor">Valor</label>
+      <input id="c-valor" type="number" step="0.01" min="0" placeholder="deixe vazio se varia"></div>
+    <div class="campo"><label for="c-dia">Vence dia</label>
+      <input id="c-dia" type="number" min="1" max="31" value="10"></div>
+  </div>
+  <div class="linha2">
+    <div class="campo"><label for="c-periodo">Repete</label>
+      <select id="c-periodo">
+        <option value="mensal">Todo mês</option>
+        <option value="bimestral">A cada 2 meses</option>
+        <option value="trimestral">A cada 3 meses</option>
+        <option value="semestral">A cada 6 meses</option>
+        <option value="anual">Uma vez por ano</option>
+      </select></div>
+    <div class="campo"><label for="c-parcelas">Parcelas</label>
+      <input id="c-parcelas" type="number" min="1" placeholder="vazio = sem fim"></div>
+  </div>
+  <div class="linha2">
+    <div class="campo"><label for="c-categoria">Categoria</label><select id="c-categoria"></select></div>
+    <div class="campo"><label for="c-conta">Forma</label><select id="c-conta"></select></div>
+  </div>
+  <div class="campo"><label for="c-inicio">Primeira cobrança</label>
+    <input id="c-inicio" type="date"></div>
+  <div class="erro" id="erro-conta"></div>
+  <div class="rodape">
+    <button class="btn sec" id="c-cancelar">Cancelar</button>
+    <button class="btn" id="c-salvar">Salvar</button>
+  </div>
+  <button id="c-excluir" style="display:none;width:100%;margin-top:10px;background:none;border:0;
+    color:var(--vermelho);font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;
+    padding:8px">Desativar esta conta</button>
+</dialog>
+
+<dialog id="dlg-quitar">
+  <h3 id="q-titulo">Pagar conta</h3>
+  <p class="sub" id="q-sub" style="margin-bottom:16px">—</p>
+  <div class="linha2">
+    <div class="campo"><label for="q-valor">Valor pago</label>
+      <input id="q-valor" type="number" step="0.01" min="0"></div>
+    <div class="campo"><label for="q-data">Data</label><input id="q-data" type="date"></div>
+  </div>
+  <div class="campo"><label for="q-conta">Pago com</label><select id="q-conta"></select></div>
+  <div id="q-diferenca" style="font-size:13.5px;margin-top:-4px"></div>
+  <div class="erro" id="erro-quitar"></div>
+  <div class="rodape">
+    <button class="btn sec" id="q-cancelar">Cancelar</button>
+    <button class="btn" id="q-salvar">Confirmar pagamento</button>
+  </div>
+</dialog>
 
 <!-- ================= MODAL ================= -->
 <dialog id="dlg">
@@ -555,6 +649,7 @@ async function iniciar(){
   categorias = c1.data ?? [];
   contas     = c2.data ?? [];
   montarSelects();
+  await carregarCompromissos();
   await carregar();
   requestAnimationFrame(moverPilula);
 }
@@ -566,6 +661,9 @@ function montarSelects(){
   $("#f-forma").innerHTML = `<option value="">—</option>` + opCon;
   $("#f-cat").innerHTML = `<option value="">Todas as categorias</option>` + opCat;
   $("#f-conta").innerHTML = `<option value="">Todas as formas</option>` + opCon;
+  $("#c-categoria").innerHTML = `<option value="">—</option>` + opCat;
+  $("#c-conta").innerHTML = `<option value="">—</option>` + opCon;
+  $("#q-conta").innerHTML = `<option value="">—</option>` + opCon;
 }
 
 // ===================== CARREGAR MÊS =====================
@@ -574,11 +672,17 @@ async function carregar(sentido){
   $("#mes-rot").textContent = rot.charAt(0).toUpperCase() + rot.slice(1);
   $("#feed").innerHTML = `<div class="carregando">Carregando…</div>`;
 
-  const [resumo, porCat, lista, orcs] = await Promise.all([
+  // as parcelas do mês nascem aqui, quando o mês é aberto
+  await db.rpc("gerar_ocorrencias", { p_mes: mesISO() });
+
+  const [resumo, porCat, lista, orcs, ocor] = await Promise.all([
     db.rpc("resumo_mes", { p_mes: mesISO() }),
     db.from("v_resumo_categoria").select("*").eq("mes", mesISO()),
     db.from("v_transacoes").select("*").gte("data", mesISO()).lte("data", fimMesISO()).order("data",{ascending:false}).order("criado_em",{ascending:false}),
     db.from("orcamentos").select("categoria_id, valor").eq("mes", mesISO()),
+    db.from("v_ocorrencias").select("*")
+      .gte("vencimento", mesISO()).lte("vencimento", fimMesISO())
+      .order("vencimento"),
   ]);
 
   transacoes = lista.data ?? [];
@@ -595,6 +699,7 @@ async function carregar(sentido){
   pintarFeed();
   pintarTabela();
   pintarOrcamento(orcs.data ?? []);
+  pintarContas(ocor.data ?? []);
   pintarConexao();
 }
 
@@ -636,6 +741,9 @@ function pintarPainel(r, porCat){
   const media   = Number(r?.media_diaria ?? 0);
   const dias    = Number(r?.dias_restantes ?? 0);
   const base    = r?.base_sobra ?? "nenhuma";
+  const aPagar   = Number(r?.a_pagar ?? 0);
+  const vencido  = Number(r?.vencido ?? 0);
+  const projetado = Number(r?.saldo_projetado ?? 0);
   const temSaldo = receita > 0;
 
   $("#metricas").innerHTML = `
@@ -658,6 +766,15 @@ function pintarPainel(r, porCat){
         !temSaldo ? "registre o que entra para ver o saldo"
         : base === "nenhuma" ? "entrou menos saiu"
         : `sobram R$ ${brl(sobra)} por dia nos ${dias} dias restantes`}</div>
+      ${aPagar ? `
+        <div class="projetado">
+          <div class="rot">A pagar ainda</div>
+          <div class="n pequeno">${dinheiro(aPagar)}</div>
+          <div class="obs">
+            ${vencido ? `<span class="alerta">R$ ${brl(vencido)} já vencido</span> · ` : ""}
+            ${temSaldo ? `sobra R$ ${brl(projetado)} depois de pagar` : "contas previstas no mês"}
+          </div>
+        </div>` : ""}
     </div>`;
 
   document.querySelectorAll("#metricas [data-conta]").forEach(el =>
@@ -753,6 +870,49 @@ function pintarOrcamento(orcs){
     </div>`).join("");
 }
 
+const MESES = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+
+function pintarContas(lista){
+  const abertas = lista.filter(o => !o.pago);
+  const total = abertas.reduce((a,o) => a + Number(o.valor_previsto ?? 0), 0);
+  const vencidas = abertas.filter(o => o.vencida).length;
+
+  $("#contas-resumo").innerHTML = lista.length
+    ? `${abertas.length} em aberto · R$ ${brl(total)}` +
+      (vencidas ? ` · <span class="venc-tag">${vencidas} vencida${vencidas>1?"s":""}</span>` : "")
+    : "Nenhuma conta cadastrada ainda.";
+
+  $("#lista-contas").innerHTML = lista.length ? lista.map(o => {
+    const d = o.vencimento.split("-");
+    return `
+    <div class="conta-linha ${o.pago ? "paga" : o.vencida ? "vencida" : ""}">
+      <div class="marca-venc">
+        <b>${d[2]}</b><small>${MESES[Number(d[1])-1]}</small>
+      </div>
+      <div>
+        <div class="conta-nome" data-editar-conta="${o.compromisso_id}"
+          style="cursor:pointer">${o.nome}${
+          o.parcela && o.parcelas ? ` <span style="color:var(--tinta-fraca);font-weight:500">${o.parcela}/${o.parcelas}</span>` : ""}</div>
+        <div class="conta-meta">
+          ${o.categoria ? `<span class="tag">${o.categoria}</span>` : ""}
+          ${o.conta ? `<span class="tag">${o.conta}</span>` : ""}
+          ${o.vencida && !o.pago ? `<span class="venc-tag">vencida</span>` : ""}
+        </div>
+      </div>
+      <div class="conta-val">
+        <b>${o.pago
+              ? `R$ ${brl(o.valor_pago ?? 0)}`
+              : o.valor_previsto ? `R$ ${brl(o.valor_previsto)}`
+              : `<span style="color:var(--tinta-fraca);font-weight:500">a definir</span>`}</b>
+        ${o.pago
+          ? `<span class="quitado">✓ pago</span>`
+          : `<button data-quitar="${o.id}">Pagar</button>`}
+      </div>
+    </div>`;
+  }).join("") : `<div class="vazio">Cadastre aluguel, luz, financiamento —<br>
+    o app passa a prever o que ainda vai sair no mês.</div>`;
+}
+
 function pintarConexao(){
   db.from("perfis").select("telefone, vinculado_em").maybeSingle().then(async ({ data: perfil }) => {
     if (perfil?.telefone) {
@@ -794,6 +954,16 @@ document.addEventListener("click", async (e) => {
     await carregar();
     return;
   }
+  const q = e.target.closest("[data-quitar]");
+  if (q) {
+    const { data } = await db.from("v_ocorrencias").select("*").eq("id", q.dataset.quitar).single();
+    if (data) abrirQuitar(data);
+    return;
+  }
+
+  const ec = e.target.closest("[data-editar-conta]");
+  if (ec) { abrirConta(compromissos.find(c => c.id === ec.dataset.editarConta)); return; }
+
   if (ed) abrirModal(transacoes.find(t => t.id === ed.dataset.editar));
 });
 
@@ -853,6 +1023,116 @@ document.addEventListener("change", async (e) => {
   inp.style.borderColor = "var(--verde)";
   setTimeout(() => inp.style.borderColor = "", 900);
 });
+
+// ===================== CONTAS A PAGAR =====================
+let compromissos = [], editandoConta = null, quitando = null;
+
+async function carregarCompromissos(){
+  const { data } = await db.from("compromissos").select("*").eq("ativo", true).order("dia_vencimento");
+  compromissos = data ?? [];
+}
+
+$("#nova-conta").onclick = () => abrirConta(null);
+$("#c-cancelar").onclick = () => $("#dlg-conta").close();
+
+function abrirConta(c){
+  editandoConta = c?.id ?? null;
+  $("#dlg-conta-titulo").textContent = c ? "Editar conta" : "Nova conta";
+  $("#c-nome").value = c?.nome ?? "";
+  $("#c-valor").value = c?.valor ?? "";
+  $("#c-dia").value = c?.dia_vencimento ?? 10;
+  $("#c-periodo").value = c?.periodicidade ?? "mensal";
+  $("#c-parcelas").value = c?.parcelas ?? "";
+  $("#c-categoria").value = c?.categoria_id ?? "";
+  $("#c-conta").value = c?.conta_id ?? "";
+  $("#c-inicio").value = c?.inicio ?? mesISO();
+  $("#erro-conta").textContent = "";
+  $("#c-excluir").style.display = c ? "block" : "none";
+  $("#dlg-conta").showModal();
+}
+
+$("#c-salvar").onclick = async () => {
+  const nome = $("#c-nome").value.trim();
+  const dia = Number($("#c-dia").value);
+  if (!nome) { $("#erro-conta").textContent = "Dê um nome à conta."; return; }
+  if (!dia || dia < 1 || dia > 31) { $("#erro-conta").textContent = "Dia de vencimento entre 1 e 31."; return; }
+
+  const { data:{ user } } = await db.auth.getUser();
+  const dados = {
+    nome,
+    valor: Number($("#c-valor").value) || null,   // vazio = conta variável
+    dia_vencimento: dia,
+    periodicidade: $("#c-periodo").value,
+    parcelas: Number($("#c-parcelas").value) || null,
+    categoria_id: $("#c-categoria").value || null,
+    conta_id: $("#c-conta").value || null,
+    inicio: $("#c-inicio").value || mesISO(),
+  };
+
+  const r = editandoConta
+    ? await db.from("compromissos").update(dados).eq("id", editandoConta)
+    : await db.from("compromissos").insert({ ...dados, user_id: user.id });
+
+  if (r.error) { $("#erro-conta").textContent = r.error.message; return; }
+  $("#dlg-conta").close();
+  await carregarCompromissos();
+  await carregar();
+};
+
+$("#c-excluir").onclick = async () => {
+  if (!confirm("Desativar esta conta? As parcelas já pagas continuam no histórico.")) return;
+  // nunca DELETE: inativa e some das próximas gerações
+  await db.from("compromissos").update({ ativo: false }).eq("id", editandoConta);
+  await db.from("ocorrencias").delete().eq("compromisso_id", editandoConta).is("transacao_id", null);
+  $("#dlg-conta").close();
+  await carregarCompromissos();
+  await carregar();
+};
+
+$("#q-cancelar").onclick = () => $("#dlg-quitar").close();
+
+function abrirQuitar(o){
+  quitando = o;
+  $("#q-titulo").textContent = `Pagar ${o.nome}`;
+  $("#q-sub").textContent = o.valor_previsto
+    ? `Previsto: R$ ${brl(o.valor_previsto)} · vence ${o.vencimento.split("-").reverse().slice(0,2).join("/")}`
+    : `Vence ${o.vencimento.split("-").reverse().slice(0,2).join("/")} · valor variável`;
+  $("#q-valor").value = o.valor_previsto ?? "";
+  $("#q-data").value = hoje();
+  $("#q-conta").value = "";
+  $("#q-diferenca").textContent = "";
+  $("#erro-quitar").textContent = "";
+  $("#dlg-quitar").showModal();
+  if (!o.valor_previsto) $("#q-valor").focus();
+}
+
+// juros, multa ou desconto ficam visíveis antes de confirmar
+$("#q-valor").oninput = () => {
+  const prev = Number(quitando?.valor_previsto ?? 0);
+  const pago = Number($("#q-valor").value);
+  const el = $("#q-diferenca");
+  if (!prev || !pago || prev === pago) { el.textContent = ""; return; }
+  const dif = pago - prev;
+  el.innerHTML = dif > 0
+    ? `<span class="alerta">R$ ${brl(dif)} acima do previsto</span>`
+    : `<span style="color:var(--verde);font-weight:600">R$ ${brl(-dif)} abaixo do previsto</span>`;
+};
+
+$("#q-salvar").onclick = async () => {
+  const valor = Number($("#q-valor").value);
+  if (!valor || valor <= 0) { $("#erro-quitar").textContent = "Informe o valor pago."; return; }
+
+  const { error } = await db.rpc("quitar_ocorrencia", {
+    p_ocorrencia: quitando.id,
+    p_valor: valor,
+    p_data: $("#q-data").value || hoje(),
+    p_conta_id: $("#q-conta").value || null,
+  });
+
+  if (error) { $("#erro-quitar").textContent = error.message; return; }
+  $("#dlg-quitar").close();
+  await carregar();
+};
 
 // ===================== VOZ =====================
 // Mesmo caminho do bot: transcreve fiel, extrai estruturado, grava.
