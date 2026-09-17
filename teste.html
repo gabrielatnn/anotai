@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anota — teste de áudio</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400..800&display=swap" rel="stylesheet">
+<style>
+:root{--papel:#E9EAE4;--papel-2:#F3F4EF;--tinta:#1B1D1A;--fraca:#6B6F68;
+  --linha:#D6D9D0;--verde:#4E8A5B;--vermelho:#B5484A;--raio:12px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--papel);color:var(--tinta);font-family:'Archivo',system-ui,sans-serif;
+  font-variant-numeric:tabular-nums;line-height:1.45;padding:34px 20px 80px}
+.wrap{max-width:560px;margin:0 auto}
+h1{font-size:25px;font-weight:800;letter-spacing:-.025em;text-align:center}
+.sub{color:var(--fraca);font-size:14.5px;margin:6px 0 26px;text-align:center}
+
+/* chave: discreta até precisar */
+.chave{margin-bottom:18px}
+.chave summary{list-style:none;cursor:pointer;font-size:13px;color:var(--fraca);
+  text-align:center;padding:6px}
+.chave summary::-webkit-details-marker{display:none}
+.chave summary:hover{color:var(--tinta)}
+.chave .ok{color:var(--verde);font-weight:600}
+.chave input{width:100%;margin-top:8px;padding:10px 12px;border:1px solid var(--linha);
+  background:var(--papel-2);border-radius:10px;font-size:14px;font-family:inherit;color:var(--tinta)}
+
+/* palco */
+.palco{text-align:center;padding:14px 0 6px}
+#gravar{width:124px;height:124px;border-radius:50%;border:0;background:var(--verde);color:#fff;
+  font-size:42px;cursor:pointer;transition:transform .18s, background .18s;
+  box-shadow:0 6px 18px rgba(78,138,91,.28);display:inline-grid;place-items:center}
+#gravar:hover{transform:scale(1.05)}
+#gravar:active{transform:scale(.97)}
+#gravar.rec{background:var(--vermelho);box-shadow:0 6px 18px rgba(181,72,74,.3);
+  animation:pulsa 1.3s infinite}
+#gravar.pensando{background:var(--fraca);cursor:default;animation:none;box-shadow:none}
+@keyframes pulsa{0%,100%{box-shadow:0 0 0 0 rgba(181,72,74,.45)}70%{box-shadow:0 0 0 22px rgba(181,72,74,0)}}
+#estado{font-size:15px;color:var(--fraca);margin-top:16px;min-height:22px;font-weight:500}
+#estado .erro{font-weight:600}
+
+/* resultado */
+.res{display:none;margin-top:26px}
+.res.on{display:block;animation:sobe .3s ease-out}
+@keyframes sobe{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.rot{font-size:12px;font-weight:700;color:var(--fraca);text-transform:uppercase;
+  letter-spacing:.06em;margin-bottom:8px}
+.trans{font-style:italic;color:var(--tinta);font-size:15px;padding:13px 16px;
+  background:var(--papel-2);border:1px dashed var(--linha);border-radius:10px;margin-bottom:20px}
+.item{background:var(--papel-2);border:1px solid var(--linha);border-left:3px solid var(--verde);
+  border-radius:10px;padding:14px 16px;margin-bottom:8px}
+.item .topo{display:flex;align-items:baseline;gap:10px}
+.item .d{font-weight:700;font-size:15.5px}
+.item .v{margin-left:auto;font-weight:800;font-size:19px;letter-spacing:-.02em}
+.item .m{font-size:12.5px;color:var(--fraca);margin-top:6px;display:flex;gap:7px;flex-wrap:wrap;
+  align-items:center}
+.tag{border:1px solid var(--linha);border-radius:99px;padding:2px 9px;background:var(--papel)}
+.baixa{border-left-color:var(--vermelho)}
+.baixa .v{color:var(--vermelho)}
+.aviso{color:var(--vermelho);font-weight:600}
+.erro{color:var(--vermelho);font-size:14.5px}
+.tempo{font-size:12px;color:var(--fraca);text-align:center;margin-top:14px}
+
+/* frases de exemplo, clicáveis */
+.exemplos{margin-top:30px;text-align:center}
+.exemplos .rot{margin-bottom:10px}
+.chip{display:inline-block;margin:4px 3px;padding:7px 13px;border-radius:99px;
+  border:1px solid var(--linha);background:var(--papel-2);font-size:13.5px;color:var(--fraca);
+  cursor:pointer;font-family:inherit;transition:all .15s}
+.chip:hover{border-color:var(--verde);color:var(--tinta)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Fale um gasto</h1>
+  <p class="sub">É a mesma lógica que vai rodar no bot do WhatsApp.</p>
+
+  <details class="chave" id="det-chave">
+    <summary id="rot-chave">Configurar chave do Gemini</summary>
+    <input id="chave" type="password" placeholder="cole a chave — fica salva só neste navegador">
+  </details>
+
+  <div class="palco">
+    <button id="gravar" title="Gravar">🎤</button>
+    <div id="estado">Toque e fale</div>
+  </div>
+
+  <div class="res" id="res"></div>
+
+  <div class="exemplos">
+    <div class="rot">Ou teste digitando</div>
+    <button class="chip">gastei quarenta e cinco e noventa no almoço, no crédito</button>
+    <button class="chip">cinquenta pila de gasolina</button>
+    <button class="chip">paguei duzentos conto no mercado ontem</button>
+    <button class="chip">cento e vinte no mercado e mais trinta na farmácia</button>
+    <button class="chip">recebi dois mil e quinhentos do salário</button>
+  </div>
+</div>
+
+<script type="module">
+const $ = s => document.querySelector(s);
+const MODELO = "gemini-2.5-flash";
+const FUSO = "America/Sao_Paulo";
+
+// mesmas listas que o usuário teria no banco
+const CATEGORIAS = ["Alimentação","Transporte","Casa","Lazer","Saúde","Educação","Pet","Outros","Salário","Extra"];
+const CONTAS = ["Pix","Dinheiro","Crédito","Débito"];
+
+const hoje = () => new Intl.DateTimeFormat("en-CA",{timeZone:FUSO}).format(new Date());
+const brl = v => Number(v||0).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+
+// chave guardada só neste navegador; some de vista quando já está preenchida
+const rotuloChave = () => {
+  const tem = !!$("#chave").value.trim();
+  $("#rot-chave").innerHTML = tem
+    ? `<span class="ok">✓ chave configurada</span>`
+    : "Configurar chave do Gemini";
+  return tem;
+};
+$("#chave").value = localStorage.getItem("gemini") ?? "";
+if (!rotuloChave()) $("#det-chave").open = true;
+$("#chave").oninput = e => { localStorage.setItem("gemini", e.target.value.trim()); rotuloChave(); };
+
+let rec = null, pedacos = [];
+
+$("#gravar").onclick = async () => {
+  if (rec?.state === "recording") { rec.stop(); return; }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    pedacos = [];
+    rec = new MediaRecorder(stream);
+    rec.ondataavailable = e => pedacos.push(e.data);
+    rec.onstop = () => {
+      stream.getTracks().forEach(t => t.stop());
+      $("#gravar").classList.remove("rec");
+      $("#gravar").textContent = "🎤";
+      processar(new Blob(pedacos, { type: rec.mimeType }));
+    };
+    rec.start();
+    $("#gravar").classList.add("rec");
+    $("#gravar").textContent = "■";
+    $("#estado").textContent = "gravando… toque para parar";
+  } catch {
+    $("#estado").innerHTML = `<span class="erro">Precisa permitir o microfone no navegador.</span>`;
+  }
+};
+
+// chips: testam a extração sem passar pelo microfone
+document.querySelectorAll(".chip").forEach(c =>
+  c.onclick = () => rodarTexto(c.textContent));
+
+async function processar(blob){
+  const chave = $("#chave").value.trim();
+  if (!chave) { $("#det-chave").open = true;
+    $("#estado").innerHTML = `<span class="erro">Cole a chave do Gemini primeiro.</span>`; return; }
+
+  ocupado(true, "ouvindo…");
+  $("#res").classList.remove("on");
+  const inicio = performance.now();
+
+  try {
+    const b64 = await paraBase64(blob);
+    const mime = (blob.type || "audio/webm").split(";")[0];
+
+    // Etapa 1 — transcrição fiel. Guardada de propósito: é ela que aparece
+    // no feed do painel e permite reprocessar a extração depois.
+    const transcricao = (await gemini(chave, {
+      contents: [{ parts: [
+        { inline_data: { mime_type: mime, data: b64 } },
+        { text: "Transcreva este áudio em português do Brasil, literalmente, sem corrigir gramática e sem comentar. Se não houver fala audível, responda apenas: VAZIO" },
+      ]}],
+      generationConfig: { temperature: 0 },
+    })).trim();
+
+    if (!transcricao || transcricao === "VAZIO") {
+      ocupado(false, `<span class="erro">Não consegui ouvir nada. Tente de novo.</span>`);
+      return;
+    }
+
+    ocupado(true, "entendendo…");
+    const itens = await extrair(chave, transcricao);
+    const ms = Math.round(performance.now() - inicio);
+
+    ocupado(false, "Toque e fale de novo");
+    mostrar(transcricao, itens, ms);
+  } catch (e) {
+    console.error(e);
+    ocupado(false, `<span class="erro">${e.message}</span>`);
+  }
+}
+
+// mesmo caminho da voz, começando pelo texto já pronto
+async function rodarTexto(frase){
+  const chave = $("#chave").value.trim();
+  if (!chave) { $("#det-chave").open = true; $("#estado").innerHTML =
+    `<span class="erro">Cole a chave do Gemini primeiro.</span>`; return; }
+
+  ocupado(true, "entendendo…");
+  $("#res").classList.remove("on");
+  const inicio = performance.now();
+  try {
+    const itens = await extrair(chave, frase);
+    ocupado(false, "Toque e fale");
+    mostrar(frase, itens, Math.round(performance.now() - inicio));
+  } catch (e) {
+    ocupado(false, `<span class="erro">${e.message}</span>`);
+  }
+}
+
+function ocupado(sim, msg){
+  const b = $("#gravar");
+  b.classList.toggle("pensando", sim);
+  b.disabled = sim;
+  b.textContent = sim ? "⋯" : "🎤";
+  $("#estado").innerHTML = msg;
+}
+
+function mostrar(transcricao, itens, ms){
+  $("#res").classList.add("on");
+  $("#res").innerHTML = `
+    <div class="rot">Ouvi isto</div>
+    <div class="trans">"${transcricao}"</div>
+    <div class="rot">E entendi assim</div>
+    ${itens.length ? itens.map(i => `
+      <div class="item ${i.confianca < 0.7 ? "baixa" : ""}">
+        <div class="topo">
+          <span class="d">${i.descricao}</span>
+          <span class="v">${i.tipo === "receita" ? "+" : ""}R$ ${brl(i.valor)}</span>
+        </div>
+        <div class="m">
+          <span class="tag">${i.categoria}</span>
+          ${i.conta ? `<span class="tag">${i.conta}</span>` : ""}
+          ${i.estabelecimento ? `<span>${i.estabelecimento}</span>` : ""}
+          <span>${i.data.split("-").reverse().slice(0,2).join("/")}</span>
+          ${i.confianca < 0.7
+            ? `<span class="aviso">confiança ${Math.round(i.confianca*100)}% — o bot perguntaria</span>`
+            : `<span>confiança ${Math.round((i.confianca ?? 0)*100)}%</span>`}
+        </div>
+      </div>`).join("")
+      : `<div class="item"><span class="erro">Nenhum valor identificado — correto se você não falou nenhum.</span></div>`}
+    <div class="tempo">${ms} ms</div>`;
+}
+
+async function extrair(chave, texto){
+  const prompt = `Você extrai lançamentos financeiros de frases faladas por brasileiros.
+
+Hoje é ${hoje()}, fuso ${FUSO}.
+Categorias disponíveis: ${CATEGORIAS.join(", ")}
+Formas de pagamento: ${CONTAS.join(", ")}
+
+Regras:
+- Devolva um ARRAY com um item por gasto ou receita mencionado. Vários numa frase = vários itens.
+- valor sempre positivo. "quarenta e cinco e noventa" = 45.90. "cinquenta pila" = 50. "duzentos conto" = 200.
+- tipo: "despesa" por padrão; "receita" quando for entrada (recebi, caiu, me pagaram).
+- descricao curta, do jeito que a pessoa fala.
+- estabelecimento só se citado; senão null.
+- categoria: a mais próxima da lista. Na dúvida, "Outros".
+- conta: da lista, ou null se não disser.
+- data: hoje, salvo se disser outra ("ontem", "sexta passada"). Formato AAAA-MM-DD.
+- confianca: 0 a 1, o quanto você está seguro do VALOR.
+- Sem valor identificável, array vazio. NUNCA invente valor.
+
+Frase: "${texto}"`;
+
+  const bruto = await gemini(chave, {
+    contents: [{ parts: [{ text: prompt }] }],
+    generationConfig: {
+      temperature: 0,
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: "ARRAY",
+        items: {
+          type: "OBJECT",
+          properties: {
+            valor:{type:"NUMBER"}, tipo:{type:"STRING",enum:["despesa","receita"]},
+            descricao:{type:"STRING"}, estabelecimento:{type:"STRING",nullable:true},
+            categoria:{type:"STRING"}, conta:{type:"STRING",nullable:true},
+            data:{type:"STRING"}, confianca:{type:"NUMBER"},
+          },
+          required:["valor","descricao","categoria","confianca"],
+        },
+      },
+    },
+  });
+
+  try {
+    const itens = JSON.parse(bruto ?? "[]");
+    return (Array.isArray(itens) ? itens : []).filter(i => typeof i.valor === "number" && i.valor > 0);
+  } catch { return []; }
+}
+
+async function gemini(chave, body){
+  const r = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${MODELO}:generateContent`,
+    { method:"POST", headers:{ "Content-Type":"application/json", "x-goog-api-key": chave },
+      body: JSON.stringify(body) });
+  if (!r.ok) {
+    const t = await r.text();
+    if (r.status === 400 && /API key/i.test(t)) throw new Error("Chave inválida.");
+    throw new Error(`Gemini ${r.status}: ${t.slice(0,160)}`);
+  }
+  const j = await r.json();
+  return j?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+}
+
+function paraBase64(blob){
+  return new Promise((ok, falhou) => {
+    const fr = new FileReader();
+    fr.onload = () => ok(fr.result.split(",")[1]);
+    fr.onerror = () => falhou(new Error("Falha ao ler o áudio."));
+    fr.readAsDataURL(blob);
+  });
+}
+</script>
+</body>
+</html>
