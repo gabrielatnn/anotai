@@ -3,7 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Anota — finanças pelo WhatsApp</title>
+<title>Anota</title>
+
+<!-- instalável na tela de início -->
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Anota">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#E9EAE4">
+<meta name="mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,75..125,400..800;1,75..125,400..700&display=swap" rel="stylesheet">
@@ -151,18 +161,73 @@ tbody tr:hover{background:var(--papel-2)}
 .passo small{display:block;font-size:13px;color:var(--tinta-fraca);margin-top:3px}
 .ok{background:#DCEBD8;border:1px solid #BCD6B6;border-radius:var(--raio);padding:14px 16px;font-size:14.5px}
 
+/* ---------- animações ---------- */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;
+    transition-duration:.01ms!important}
+}
+
+/* pílula que desliza entre as abas */
+nav{position:relative}
+.pilula{position:absolute;top:0;height:calc(100% - 0px);background:var(--tinta);border-radius:8px;
+  z-index:0;transition:transform .32s cubic-bezier(.4,0,.2,1),width .32s cubic-bezier(.4,0,.2,1);
+  pointer-events:none;opacity:0}
+.pilula.on{opacity:1}
+nav [role=tab]{position:relative;z-index:1;transition:color .2s}
+nav [role=tab][aria-selected=true]{background:transparent;border-color:transparent}
+
+/* troca de mês */
+.desliza-esq{animation:desEsq .3s cubic-bezier(.22,.9,.3,1)}
+.desliza-dir{animation:desDir .3s cubic-bezier(.22,.9,.3,1)}
+@keyframes desEsq{from{opacity:0;transform:translateX(26px)}to{opacity:1;transform:none}}
+@keyframes desDir{from{opacity:0;transform:translateX(-26px)}to{opacity:1;transform:none}}
+
+/* barras crescendo */
+.barra i,.cat-barra i{transition:width .55s cubic-bezier(.22,.9,.3,1)}
+
+/* lançamento recém-salvo */
+.lanc.novo{animation:chega .5s cubic-bezier(.22,.9,.3,1)}
+@keyframes chega{
+  0%{opacity:0;transform:translateY(-10px) scale(.97);background:#DCEBD8}
+  60%{background:#DCEBD8}
+  100%{opacity:1;transform:none;background:var(--papel-2)}
+}
+
+/* saída ao apagar */
+.saindo{animation:some .32s cubic-bezier(.4,0,1,1) forwards;overflow:hidden}
+@keyframes some{
+  to{opacity:0;transform:translateX(-14px);max-height:0;margin-bottom:0;
+     padding-top:0;padding-bottom:0;border-width:0}
+}
+
+/* voo do modal até o feed */
+.voando{position:fixed;z-index:200;margin:0;pointer-events:none;
+  transition:transform .5s cubic-bezier(.4,0,.2,1),opacity .5s ease}
+
+/* esqueleto enquanto a IA pensa */
+.skel{background:linear-gradient(90deg,var(--papel-2) 25%,var(--linha) 50%,var(--papel-2) 75%);
+  background-size:200% 100%;animation:brilha 1.3s infinite;border-radius:6px}
+@keyframes brilha{from{background-position:200% 0}to{background-position:-200% 0}}
+.skel-linha{height:13px;margin-bottom:9px}
+.skel-bloco{border:1px solid var(--linha);border-left:3px solid var(--linha);border-radius:9px;
+  padding:13px 14px;margin-bottom:8px}
+
 /* ---------- voz ---------- */
 #falar{background:var(--tinta);border-color:var(--tinta);color:var(--papel-2)}
 #falar:hover{background:#000;color:var(--papel-2)}
 
 #dlg-voz{width:min(440px,94vw);margin:auto}
 .palco{text-align:center;padding:10px 0 4px}
+.mic-area{position:relative;display:inline-grid;place-items:center}
+.onda{position:absolute;width:118px;height:118px;border-radius:50%;background:var(--vermelho);
+  opacity:0;transform:scale(1);pointer-events:none;
+  transition:transform .08s linear,opacity .18s}
+.onda.on{opacity:.18}
 #gravar{width:118px;height:118px;border-radius:50%;border:0;background:var(--verde);color:#fff;
   font-size:40px;cursor:pointer;transition:transform .18s,background .18s;
   box-shadow:0 6px 18px rgba(78,138,91,.28)}
 #gravar:hover{transform:scale(1.05)}
-#gravar.rec{background:var(--vermelho);box-shadow:0 6px 18px rgba(181,72,74,.3);
-  animation:pulsa 1.3s infinite}
+#gravar.rec{background:var(--vermelho);box-shadow:0 6px 18px rgba(181,72,74,.3)}
 #gravar.pensando{background:var(--tinta-fraca);cursor:default;animation:none;box-shadow:none}
 @keyframes pulsa{0%,100%{box-shadow:0 0 0 0 rgba(181,72,74,.45)}70%{box-shadow:0 0 0 22px rgba(181,72,74,0)}}
 #voz-estado{font-size:14.5px;color:var(--tinta-fraca);margin-top:14px;min-height:21px}
@@ -203,6 +268,7 @@ dialog h3{font-size:17px;font-weight:700;margin-bottom:14px}
   body{font-size:15px}
   .wrap{padding:0 14px 40px}
   header{padding:18px 0 12px;gap:8px}
+  body{padding-top:env(safe-area-inset-top)}
   .marca{font-size:22px}
   .mes{width:100%;margin-left:0;justify-content:space-between}
   .mes span{min-width:auto;flex:1}
@@ -234,6 +300,7 @@ dialog h3{font-size:17px;font-weight:700;margin-bottom:14px}
   dialog::backdrop{background:rgba(27,29,26,.5)}
   .linha2{grid-template-columns:1fr}
   #gravar{width:104px;height:104px;font-size:36px}
+  .onda{width:104px;height:104px}
   .rodape{position:sticky;bottom:0;background:var(--papel);padding-top:12px;margin-top:16px}
   .rodape .btn{padding:14px}
   .campo input,.campo select{font-size:16px}  /* evita o zoom automático do iOS */
@@ -350,7 +417,10 @@ dialog h3{font-size:17px;font-weight:700;margin-bottom:14px}
 
 <dialog id="dlg-voz">
   <div class="palco">
-    <button id="gravar" title="Gravar">🎤</button>
+    <div class="mic-area">
+      <span class="onda" id="onda"></span>
+      <button id="gravar" title="Gravar">🎤</button>
+    </div>
     <div id="voz-estado">Toque e fale seu gasto</div>
   </div>
   <div id="voz-res"></div>
@@ -474,6 +544,7 @@ async function iniciar(){
   contas     = c2.data ?? [];
   montarSelects();
   await carregar();
+  requestAnimationFrame(moverPilula);
 }
 
 function montarSelects(){
@@ -486,7 +557,7 @@ function montarSelects(){
 }
 
 // ===================== CARREGAR MÊS =====================
-async function carregar(){
+async function carregar(sentido){
   const rot = mes.toLocaleDateString("pt-BR",{month:"long",year:"numeric"});
   $("#mes-rot").textContent = rot.charAt(0).toUpperCase() + rot.slice(1);
   $("#feed").innerHTML = `<div class="carregando">Carregando…</div>`;
@@ -499,6 +570,15 @@ async function carregar(){
   ]);
 
   transacoes = lista.data ?? [];
+
+  // o conteúdo entra pelo lado do gesto
+  if (sentido) {
+    const alvo = document.querySelector("#app section:not([hidden])");
+    alvo?.classList.remove("desliza-esq","desliza-dir");
+    void alvo?.offsetWidth;
+    alvo?.classList.add(sentido === "esq" ? "desliza-esq" : "desliza-dir");
+  }
+
   pintarPainel(resumo.data?.[0], porCat.data ?? []);
   pintarFeed();
   pintarTabela();
@@ -508,7 +588,31 @@ async function carregar(){
 
 function dinheiro(v, cls=""){
   const [int, cent] = brl(v).split(",");
-  return `<span class="sifrao">R$</span><span class="${cls}">${int}<span class="cent">,${cent}</span></span>`;
+  return `<span class="sifrao">R$</span><span class="${cls}" data-conta="${v}">${int}<span class="cent">,${cent}</span></span>`;
+}
+
+// Números sobem de zero até o valor: o olho acompanha a mudança ao trocar de mês.
+function contar(el, ate, ms = 520){
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches || !ate) return;
+  const t0 = performance.now();
+  (function q(t){
+    const p = Math.min((t - t0) / ms, 1);
+    const suave = 1 - Math.pow(1 - p, 3);
+    const [int, cent] = brl(ate * suave).split(",");
+    el.innerHTML = `${int}<span class="cent">,${cent}</span>`;
+    if (p < 1) requestAnimationFrame(q);
+  })(t0);
+}
+
+// As larguras entram em zero e crescem no quadro seguinte.
+function crescerBarras(raiz){
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const barras = raiz.querySelectorAll(".barra i, .cat-barra i");
+  const alvos = [...barras].map(b => b.style.width);
+  barras.forEach(b => b.style.width = "0%");
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    barras.forEach((b, i) => b.style.width = alvos[i]);
+  }));
 }
 
 function pintarPainel(r, porCat){
@@ -539,6 +643,9 @@ function pintarPainel(r, porCat){
     .map(c => `<i style="width:${Math.min(Number(c.gasto)/base*100,100)}%;background:${c.categoria_cor}" title="${c.categoria}"></i>`)
     .join("");
 
+  document.querySelectorAll("#metricas [data-conta]").forEach(el =>
+    contar(el, Number(el.dataset.conta)));
+
   $("#legenda").innerHTML = orc
     ? `<span>${porCat.length} categoria${porCat.length===1?"":"s"} com gasto</span><span>${Math.round(gasto/orc*100)}% do orçamento usado</span>`
     : `<span>A barra mostra a divisão por categoria</span><span><a href="#" id="ir-orc">definir orçamento</a></span>`;
@@ -561,6 +668,8 @@ function pintarPainel(r, porCat){
                         : `restam R$ ${brl(o-g)} de R$ ${brl(o)}`}</span>
       </div>`;
     }).join("") : `<div class="vazio">Nenhum gasto neste mês.</div>`;
+
+  crescerBarras($("#painel"));
 }
 
 const ICONE = { audio:"🎤", texto:"💬", manual:"✍️", recorrente:"🔁" };
@@ -568,7 +677,7 @@ const ICONE = { audio:"🎤", texto:"💬", manual:"✍️", recorrente:"🔁" }
 function pintarFeed(){
   const ult = transacoes.slice(0,6);
   $("#feed").innerHTML = ult.length ? ult.map(t => `
-    <article class="lanc ${t.revisado?'':'pendente'}" style="--cor:${t.categoria_cor||'#8A8F86'}">
+    <article class="lanc ${t.revisado?'':'pendente'} ${recemSalvos.includes(t.id)?'novo':''}" style="--cor:${t.categoria_cor||'#8A8F86'}">
       <div class="lanc-topo">
         <span class="lanc-desc">${t.descricao}</span>
         <span class="lanc-val ${t.tipo==='receita'?'receita':''}">${t.tipo==='receita'?'+':''}R$ ${brl(t.valor)}</span>
@@ -584,7 +693,8 @@ function pintarFeed(){
         <button data-apagar="${t.id}">Apagar</button>
       </div>
     </article>`).join("")
-    : `<div class="vazio">Nada por aqui ainda.<br>Mande um gasto no WhatsApp ou use o botão Lançar.</div>`;
+    : `<div class="vazio">Nada por aqui ainda.<br>Toque em Falar e diga seu primeiro gasto.</div>`;
+  if (recemSalvos.length) setTimeout(() => recemSalvos = [], 900);
 }
 
 function pintarTabela(){
@@ -646,6 +756,13 @@ document.addEventListener("click", async (e) => {
   if (ap) {
     e.stopPropagation();
     if (!confirm("Apagar este lançamento?")) return;
+    // o cartão encolhe antes de sumir, em vez de piscar fora da tela
+    const card = ap.closest(".lanc");
+    if (card && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      card.style.maxHeight = `${card.scrollHeight}px`;
+      card.classList.add("saindo");
+      await new Promise(r => setTimeout(r, 300));
+    }
     // Soft delete: some da view, continua no banco.
     await db.from("transacoes").update({ excluido_em: new Date().toISOString() }).eq("id", ap.dataset.apagar);
     await carregar();
@@ -750,7 +867,7 @@ async function carregarModelos(chave){
   } catch {}
 }
 
-let rec = null, pedacos = [], pendentes = [], transcricaoAtual = "";
+let rec = null, pedacos = [], pendentes = [], transcricaoAtual = "", recemSalvos = [];
 
 $("#falar").onclick = () => {
   if (!chaveGemini()) { abrirAba("conexao"); $("#chave").focus(); return; }
@@ -772,10 +889,12 @@ $("#gravar").onclick = async () => {
     rec.ondataavailable = e => pedacos.push(e.data);
     rec.onstop = () => {
       stream.getTracks().forEach(t => t.stop());
+      pararOnda();
       $("#gravar").classList.remove("rec");
       $("#gravar").textContent = "🎤";
       ouvir(new Blob(pedacos, { type: rec.mimeType }));
     };
+    iniciarOnda(stream);
     rec.start();
     $("#gravar").classList.add("rec");
     $("#gravar").textContent = "■";
@@ -784,6 +903,42 @@ $("#gravar").onclick = async () => {
     $("#voz-estado").innerHTML = `<span class="erro">Precisa permitir o microfone.</span>`;
   }
 };
+
+// A onda mostra que o microfone está captando de verdade —
+// o pulso fixo de antes acendia igual no silêncio.
+let audioCtx, analisador, animOnda;
+function iniciarOnda(stream){
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const fonte = audioCtx.createMediaStreamSource(stream);
+    analisador = audioCtx.createAnalyser();
+    analisador.fftSize = 512;
+    analisador.smoothingTimeConstant = .75;
+    fonte.connect(analisador);
+    const dados = new Uint8Array(analisador.frequencyBinCount);
+    const onda = $("#onda");
+    onda.classList.add("on");
+
+    (function quadro(){
+      analisador.getByteTimeDomainData(dados);
+      let soma = 0;
+      for (const v of dados) { const d = (v - 128) / 128; soma += d * d; }
+      const rms = Math.sqrt(soma / dados.length);
+      onda.style.transform = `scale(${1 + Math.min(rms * 3.4, 1.05)})`;
+      onda.style.opacity = String(.14 + Math.min(rms * 1.3, .3));
+      animOnda = requestAnimationFrame(quadro);
+    })();
+  } catch {}
+}
+
+function pararOnda(){
+  cancelAnimationFrame(animOnda);
+  const onda = $("#onda");
+  onda.classList.remove("on");
+  onda.style.transform = "scale(1)";
+  audioCtx?.close?.();
+  audioCtx = null;
+}
 
 function vozEstado(ocupado, msg){
   const b = $("#gravar");
@@ -794,30 +949,68 @@ function vozEstado(ocupado, msg){
 }
 
 async function ouvir(blob){
-  vozEstado(true, "ouvindo…");
-  $("#voz-res").innerHTML = "";
+  vozEstado(true, "entendendo…");
+  // Espera com forma: mostra onde cada coisa vai aparecer.
+  $("#voz-res").innerHTML = `
+    <div class="rot">Ouvi isto</div>
+    <div class="skel skel-linha" style="width:88%"></div>
+    <div class="skel skel-linha" style="width:54%;margin-bottom:18px"></div>
+    <div class="rot">E entendi assim</div>
+    <div class="skel-bloco">
+      <div class="skel skel-linha" style="width:62%"></div>
+      <div class="skel skel-linha" style="width:38%;margin-bottom:0"></div>
+    </div>`;
   $("#voz-salvar").style.display = "none";
   try {
     const b64 = await paraBase64(blob);
     const mime = (blob.type || "audio/webm").split(";")[0];
 
-    transcricaoAtual = (await gemini({
+    // Uma chamada só. Transcrever e extrair em requisições separadas
+    // dobrava a espera sem melhorar o resultado.
+    const bruto = await gemini({
       contents: [{ parts: [
         { inline_data: { mime_type: mime, data: b64 } },
-        { text: "Transcreva este áudio em português do Brasil, literalmente, sem corrigir gramática e sem comentar. Se não houver fala audível, responda apenas: VAZIO" },
+        { text: promptVoz() },
       ]}],
-      generationConfig: { temperature: 0 },
-    })).trim();
+      generationConfig: {
+        temperature: 0,
+        thinkingConfig: { thinkingLevel: "minimal" },
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: "OBJECT",
+          properties: {
+            transcricao: { type: "STRING" },
+            itens: {
+              type: "ARRAY",
+              items: {
+                type: "OBJECT",
+                properties: {
+                  valor:{type:"NUMBER"}, tipo:{type:"STRING",enum:["despesa","receita"]},
+                  descricao:{type:"STRING"}, estabelecimento:{type:"STRING",nullable:true},
+                  categoria:{type:"STRING"}, conta:{type:"STRING",nullable:true},
+                  data:{type:"STRING"}, confianca:{type:"NUMBER"},
+                },
+                required:["valor","descricao","categoria","confianca"],
+              },
+            },
+          },
+          required: ["transcricao", "itens"],
+        },
+      },
+    });
 
-    if (!transcricaoAtual || transcricaoAtual === "VAZIO") {
+    let dados = {};
+    try { dados = JSON.parse(bruto ?? "{}"); } catch {}
+    transcricaoAtual = (dados.transcricao ?? "").trim();
+    pendentes = (Array.isArray(dados.itens) ? dados.itens : [])
+      .filter(i => typeof i.valor === "number" && i.valor > 0);
+
+    if (!transcricaoAtual) {
       vozEstado(false, `<span class="erro">Não consegui ouvir. Tente de novo.</span>`);
       return;
     }
 
-    vozEstado(true, "entendendo…");
-    pendentes = await extrairVoz(transcricaoAtual);
     vozEstado(false, pendentes.length ? "Confira antes de salvar" : "Toque e fale de novo");
-
     $("#voz-res").innerHTML = `
       <div class="rot">Ouvi isto</div>
       <div class="trans">"${transcricaoAtual}"</div>
@@ -830,7 +1023,7 @@ async function ouvir(blob){
           <div class="m">
             <span class="tag">${i.categoria}</span>
             ${i.conta ? `<span class="tag">${i.conta}</span>` : ""}
-            <span>${i.data.split("-").reverse().slice(0,2).join("/")}</span>
+            <span>${(i.data ?? hoje()).split("-").reverse().slice(0,2).join("/")}</span>
             ${i.confianca < 0.7 ? `<span class="aviso">confira o valor</span>` : ""}
           </div>
         </div>`).join("")
@@ -843,17 +1036,16 @@ async function ouvir(blob){
   }
 }
 
-async function extrairVoz(texto){
-  const cats = categorias.map(c => c.nome).join(", ");
-  const cons = contas.map(c => c.nome).join(", ");
-  const prompt = `Você extrai lançamentos financeiros de frases faladas por brasileiros.
+function promptVoz(){
+  return `Ouça o áudio e devolva DUAS coisas: a transcrição literal e os lançamentos financeiros que ela contém.
 
 Hoje é ${hoje()}, fuso America/Sao_Paulo.
-Categorias disponíveis: ${cats}
-Formas de pagamento: ${cons}
+Categorias disponíveis: ${categorias.map(c => c.nome).join(", ")}
+Formas de pagamento: ${contas.map(c => c.nome).join(", ")}
 
-Regras:
-- Devolva um ARRAY com um item por gasto ou receita mencionado. Vários numa frase = vários itens.
+transcricao: exatamente o que foi dito, em português do Brasil, sem corrigir gramática. Vazio se não houver fala.
+
+itens: um por gasto ou receita mencionado. Vários numa frase = vários itens.
 - valor sempre positivo. "quarenta e cinco e noventa" = 45.90. "cinquenta pila" = 50. "duzentos conto" = 200.
 - tipo: "despesa" por padrão; "receita" quando for entrada (recebi, caiu, me pagaram).
 - descricao curta, do jeito que a pessoa fala.
@@ -866,35 +1058,7 @@ Regras:
   Só aceite data futura se a frase deixar claro que é futura ("vou pagar dia 20",
   "vence mês que vem"). Formato AAAA-MM-DD.
 - confianca: 0 a 1, o quanto você está seguro do VALOR.
-- Sem valor identificável, array vazio. NUNCA invente valor.
-
-Frase: "${texto}"`;
-
-  const bruto = await gemini({
-    contents: [{ parts: [{ text: prompt }] }],
-    generationConfig: {
-      temperature: 0,
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: "ARRAY",
-        items: {
-          type: "OBJECT",
-          properties: {
-            valor:{type:"NUMBER"}, tipo:{type:"STRING",enum:["despesa","receita"]},
-            descricao:{type:"STRING"}, estabelecimento:{type:"STRING",nullable:true},
-            categoria:{type:"STRING"}, conta:{type:"STRING",nullable:true},
-            data:{type:"STRING"}, confianca:{type:"NUMBER"},
-          },
-          required:["valor","descricao","categoria","confianca"],
-        },
-      },
-    },
-  });
-
-  try {
-    const itens = JSON.parse(bruto ?? "[]");
-    return (Array.isArray(itens) ? itens : []).filter(i => typeof i.valor === "number" && i.valor > 0);
-  } catch { return []; }
+- Sem valor identificável, itens vazio. NUNCA invente valor.`;
 }
 
 $("#voz-salvar").onclick = async () => {
@@ -914,12 +1078,41 @@ $("#voz-salvar").onclick = async () => {
     revisado: false,
   }));
 
-  const { error } = await db.from("transacoes").insert(linhas);
+  const { data: salvas, error } = await db.from("transacoes").insert(linhas).select("id");
   if (error) { vozEstado(false, `<span class="erro">${error.message}</span>`); return; }
 
+  recemSalvos = (salvas ?? []).map(t => t.id);
+  await voarParaFeed();
   $("#dlg-voz").close();
   await carregar();
 };
+
+// O cartão sai do modal e vai até o feed: mostra onde o lançamento foi parar.
+function voarParaFeed(){
+  const card = document.querySelector("#voz-res .prev");
+  const destino = $("#feed");
+  if (!card || !destino || matchMedia("(prefers-reduced-motion: reduce)").matches)
+    return Promise.resolve();
+
+  const de = card.getBoundingClientRect();
+  const para = destino.getBoundingClientRect();
+  const clone = card.cloneNode(true);
+  clone.className = "lanc voando";
+  Object.assign(clone.style, {
+    left: `${de.left}px`, top: `${de.top}px`, width: `${de.width}px`,
+  });
+  document.body.appendChild(clone);
+
+  return new Promise(ok => {
+    requestAnimationFrame(() => {
+      const dx = para.left + para.width / 2 - (de.left + de.width / 2);
+      const dy = para.top + 20 - de.top;
+      clone.style.transform = `translate(${dx}px, ${dy}px) scale(.9)`;
+      clone.style.opacity = "0";
+      setTimeout(() => { clone.remove(); ok(); }, 460);
+    });
+  });
+}
 
 // O modelo devolve nome, o banco quer id. Compara sem acento e sem caixa.
 function acharId(lista, nome){
@@ -930,13 +1123,18 @@ function acharId(lista, nome){
   return achou?.id ?? null;
 }
 
-async function gemini(body){
+async function gemini(body, semPensamento = false){
+  if (semPensamento && body.generationConfig?.thinkingConfig) {
+    body = { ...body, generationConfig: { ...body.generationConfig, thinkingConfig: undefined } };
+  }
   const r = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${modeloAtual()}:generateContent`,
     { method:"POST", headers:{ "Content-Type":"application/json", "x-goog-api-key": chaveGemini() },
       body: JSON.stringify(body) });
   if (!r.ok) {
     const t = await r.text();
+    // modelos mais antigos não aceitam thinkingConfig
+    if (r.status === 400 && /thinking/i.test(t) && !semPensamento) return gemini(body, true);
     if (r.status === 400 && /API key/i.test(t)) throw new Error("Chave do Gemini inválida.");
     if (r.status === 404) throw new Error("Modelo indisponível. Escolha outro em Ajustes.");
     if (r.status === 429) throw new Error("Cota do Gemini esgotada por hoje.");
@@ -957,14 +1155,29 @@ function paraBase64(blob){
 
 // ===================== NAVEGAÇÃO =====================
 const abas = document.querySelectorAll('nav [role="tab"]');
+const pilula = Object.assign(document.createElement("span"), { className: "pilula" });
+document.querySelector("nav").prepend(pilula);
+
+function moverPilula(){
+  const ativa = document.querySelector('nav [role="tab"][aria-selected="true"]');
+  if (!ativa) return;
+  pilula.style.width = `${ativa.offsetWidth}px`;
+  pilula.style.height = `${ativa.offsetHeight}px`;
+  pilula.style.transform = `translateX(${ativa.offsetLeft}px)`;
+  pilula.classList.add("on");
+}
+
 function abrirAba(id){
   abas.forEach(o => o.setAttribute("aria-selected", o.dataset.aba === id));
   document.querySelectorAll("#app section").forEach(s => s.hidden = (s.id !== id));
+  moverPilula();
 }
 abas.forEach(b => b.onclick = () => abrirAba(b.dataset.aba));
+addEventListener("resize", moverPilula);
+requestAnimationFrame(moverPilula);
 
-$("#mes-ant").onclick  = () => { mes = new Date(mes.getFullYear(), mes.getMonth()-1, 1); carregar(); };
-$("#mes-prox").onclick = () => { mes = new Date(mes.getFullYear(), mes.getMonth()+1, 1); carregar(); };
+$("#mes-ant").onclick  = () => { mes = new Date(mes.getFullYear(), mes.getMonth()-1, 1); carregar("dir"); };
+$("#mes-prox").onclick = () => { mes = new Date(mes.getFullYear(), mes.getMonth()+1, 1); carregar("esq"); };
 $("#busca").oninput = pintarTabela;
 $("#f-cat").onchange = pintarTabela;
 $("#f-conta").onchange = pintarTabela;
