@@ -13,16 +13,51 @@
 <meta name="apple-mobile-web-app-title" content="Anota">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#E9EAE4">
+<script>
+  // aplicado antes da primeira pintura: sem isto o app pisca claro ao abrir no escuro
+  (() => { const t = localStorage.getItem("tema");
+    if (t && t !== "auto") document.documentElement.setAttribute("data-tema", t); })();
+</script>
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,75..125,400..800;1,75..125,400..700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --papel:#E9EAE4; --papel-2:#F3F4EF; --tinta:#1B1D1A; --tinta-fraca:#6B6F68;
-  --linha:#D6D9D0; --verde:#4E8A5B; --vermelho:#B5484A;
+  color-scheme: light;
+  --papel:#E9EAE4; --papel-2:#F3F4EF; --tinta:#1B1D1A; --tinta-forte:#000;
+  --tinta-fraca:#6B6F68; --linha:#D6D9D0;
+  --verde:#4E8A5B; --verde-forte:#3F7349; --verde-fraco:#DCEBD8; --verde-borda:#BCD6B6;
+  --vermelho:#B5484A; --vermelho-fraco:#F6E9E9;
+  --backdrop:rgba(27,29,26,.45);
   --raio:12px; --sombra:0 1px 2px rgba(27,29,26,.04);
 }
+
+/* Escuro não é o claro invertido: o fundo puxa o mesmo verde-oliva da marca,
+   os cards sobem um degrau em vez de escurecer, e verde e vermelho clareiam
+   para manter contraste legível sobre superfície escura. */
+@media (prefers-color-scheme: dark){
+  :root:not([data-tema="claro"]){
+    color-scheme: dark;
+    --papel:#141613; --papel-2:#1D201C; --tinta:#E4E6DF; --tinta-forte:#FFF;
+    --tinta-fraca:#8E938A; --linha:#2E322C;
+    --verde:#6FAE7D; --verde-forte:#82C08F; --verde-fraco:#22301F; --verde-borda:#3A5A3F;
+    --vermelho:#D97173; --vermelho-fraco:#33201F;
+    --backdrop:rgba(0,0,0,.6);
+    --sombra:0 1px 2px rgba(0,0,0,.3);
+  }
+}
+:root[data-tema="escuro"]{
+  color-scheme: dark;
+  --papel:#141613; --papel-2:#1D201C; --tinta:#E4E6DF; --tinta-forte:#FFF;
+  --tinta-fraca:#8E938A; --linha:#2E322C;
+  --verde:#6FAE7D; --verde-forte:#82C08F; --verde-fraco:#22301F; --verde-borda:#3A5A3F;
+  --vermelho:#D97173; --vermelho-fraco:#33201F;
+  --backdrop:rgba(0,0,0,.6);
+  --sombra:0 1px 2px rgba(0,0,0,.3);
+}
+body,.card,.lanc,.prev,dialog,input,select,.tag,nav button{
+  transition:background-color .22s,border-color .22s,color .22s}
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--papel);color:var(--tinta);font-family:'Archivo',system-ui,sans-serif;
   font-variant-numeric:tabular-nums;line-height:1.45;-webkit-font-smoothing:antialiased}
@@ -43,7 +78,7 @@ button,input,select{font-family:inherit}
 .campo input{width:100%;padding:10px 12px;border:1px solid var(--linha);background:var(--papel-2);
   border-radius:8px;font-size:15px;color:var(--tinta)}
 .campo input:focus{outline:2px solid var(--verde);outline-offset:1px;border-color:transparent}
-.btn{width:100%;padding:11px;background:var(--tinta);color:var(--papel-2);border:0;border-radius:8px;
+.btn{width:100%;padding:11px;background:var(--tinta);color:var(--papel);border:0;border-radius:8px;
   font-size:15px;font-weight:700;cursor:pointer}
 .btn:hover{opacity:.9}
 .btn.sec{background:transparent;color:var(--tinta-fraca);border:1px solid var(--linha);font-weight:600;margin-top:8px}
@@ -59,16 +94,20 @@ header{display:flex;align-items:center;gap:14px;padding:24px 0 16px;border-botto
   width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:15px;line-height:1}
 .mes button:hover{border-color:var(--tinta)}
 .sair{background:none;border:0;color:var(--tinta-fraca);font-size:13px;cursor:pointer;
-  margin-left:16px;padding:4px 0;flex-shrink:0}
+  margin-left:12px;padding:4px 0;flex-shrink:0}
+#tema{border:1px solid var(--linha);background:var(--papel-2);color:var(--tinta);
+  width:30px;height:28px;border-radius:7px;cursor:pointer;font-size:14px;line-height:1;
+  margin-left:10px;flex-shrink:0;display:grid;place-items:center;padding:0}
+#tema:hover{border-color:var(--tinta)}
 .sair:hover{color:var(--tinta)}
 
 nav{display:flex;gap:4px;margin:18px 0 22px;flex-wrap:wrap;align-items:center}
 nav button{font-size:14px;font-weight:600;padding:7px 14px;border:1px solid transparent;
   background:transparent;color:var(--tinta-fraca);cursor:pointer;border-radius:8px}
 nav button:hover{background:var(--papel-2);color:var(--tinta)}
-nav button[aria-selected="true"]{background:var(--tinta);border-color:var(--tinta);color:var(--papel-2)}
+nav button[aria-selected="true"]{background:transparent;border-color:transparent;color:var(--papel)}
 #novo{background:var(--verde);border-color:var(--verde);color:#fff}
-#novo:hover{background:#3F7349;color:#fff}
+#novo:hover{background:var(--verde-forte);color:#fff}
 
 section[hidden]{display:none}
 h2{font-size:15px;font-weight:700;margin-bottom:2px}
@@ -157,11 +196,11 @@ tbody tr:hover{background:var(--papel-2)}
   word-break:break-all}
 .passo{display:grid;grid-template-columns:auto 1fr;gap:14px;padding:14px 0;border-bottom:1px solid var(--linha)}
 .passo:last-child{border:0}
-.passo b{width:26px;height:26px;border-radius:99px;background:var(--tinta);color:var(--papel-2);
+.passo b{width:26px;height:26px;border-radius:99px;background:var(--tinta);color:var(--papel);
   display:grid;place-items:center;font-size:13px;font-weight:700}
 .passo p{font-size:14.5px}
 .passo small{display:block;font-size:13px;color:var(--tinta-fraca);margin-top:3px}
-.ok{background:#DCEBD8;border:1px solid #BCD6B6;border-radius:var(--raio);padding:14px 16px;font-size:14.5px}
+.ok{background:var(--verde-fraco);border:1px solid var(--verde-borda);border-radius:var(--raio);padding:14px 16px;font-size:14.5px}
 
 /* ---------- animações ---------- */
 @media (prefers-reduced-motion: reduce){
@@ -190,8 +229,8 @@ nav [role=tab][aria-selected=true]{background:transparent;border-color:transpare
 /* lançamento recém-salvo */
 .lanc.novo{animation:chega .5s cubic-bezier(.22,.9,.3,1)}
 @keyframes chega{
-  0%{opacity:0;transform:translateY(-10px) scale(.97);background:#DCEBD8}
-  60%{background:#DCEBD8}
+  0%{opacity:0;transform:translateY(-10px) scale(.97);background:var(--verde-fraco)}
+  60%{background:var(--verde-fraco)}
   100%{opacity:1;transform:none;background:var(--papel-2)}
 }
 
@@ -222,7 +261,7 @@ nav [role=tab][aria-selected=true]{background:transparent;border-color:transpare
   border:1px solid var(--linha);display:grid;place-items:center;line-height:1;flex:none}
 .marca-venc b{font-size:15px;font-weight:800;display:block}
 .marca-venc small{font-size:9.5px;color:var(--tinta-fraca);text-transform:uppercase;letter-spacing:.04em}
-.conta-linha.vencida .marca-venc{border-color:var(--vermelho);background:#F6E9E9}
+.conta-linha.vencida .marca-venc{border-color:var(--vermelho);background:var(--vermelho-fraco)}
 .conta-linha.vencida .marca-venc b{color:var(--vermelho)}
 .conta-linha.paga{opacity:.55}
 .conta-nome{font-weight:600;font-size:15px}
@@ -232,7 +271,7 @@ nav [role=tab][aria-selected=true]{background:transparent;border-color:transpare
 .conta-val button{margin-top:5px;font-size:12px;font-weight:600;padding:4px 11px;
   border:1px solid var(--verde);background:var(--verde);color:#fff;border-radius:6px;
   cursor:pointer;font-family:inherit}
-.conta-val button:hover{background:#3F7349}
+.conta-val button:hover{background:var(--verde-forte)}
 .conta-val .quitado{font-size:12px;color:var(--verde);font-weight:600}
 .venc-tag{color:var(--vermelho);font-weight:600}
 
@@ -241,8 +280,8 @@ nav [role=tab][aria-selected=true]{background:transparent;border-color:transpare
 .projetado .rot{margin-bottom:3px}
 
 /* ---------- voz ---------- */
-#falar{background:var(--tinta);border-color:var(--tinta);color:var(--papel-2)}
-#falar:hover{background:#000;color:var(--papel-2)}
+#falar{background:var(--tinta);border-color:var(--tinta);color:var(--papel)}
+#falar:hover{background:var(--tinta-forte);color:var(--papel)}
 
 #dlg-voz{width:min(440px,94vw);margin:auto}
 .palco{text-align:center;padding:10px 0 4px}
@@ -277,7 +316,7 @@ nav [role=tab][aria-selected=true]{background:transparent;border-color:transpare
 /* ---------- modal ---------- */
 dialog{border:1px solid var(--linha);border-radius:14px;background:var(--papel);color:var(--tinta);
   padding:22px;width:min(420px,92vw);margin:auto;max-height:88dvh;overflow-y:auto}
-dialog::backdrop{background:rgba(27,29,26,.45)}
+dialog::backdrop{background:var(--backdrop)}
 dialog h3{font-size:17px;font-weight:700;margin-bottom:14px}
 .linha2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .campo select{width:100%;padding:10px 12px;border:1px solid var(--linha);background:var(--papel-2);
@@ -316,7 +355,7 @@ dialog h3{font-size:17px;font-weight:700;margin-bottom:14px}
     background:linear-gradient(to top,var(--papel) 72%,transparent);z-index:40}
   .acoes-fixas button{flex:1;padding:14px;border-radius:12px;font-size:15px;font-weight:700;
     border:1px solid var(--linha);cursor:pointer;font-family:inherit}
-  .acoes-fixas #falar-m{background:var(--tinta);color:var(--papel-2);border-color:var(--tinta)}
+  .acoes-fixas #falar-m{background:var(--tinta);color:var(--papel);border-color:var(--tinta)}
   .acoes-fixas #novo-m{background:var(--verde);color:#fff;border-color:var(--verde)}
   .wrap{padding-bottom:96px}
 
@@ -327,7 +366,7 @@ dialog h3{font-size:17px;font-weight:700;margin-bottom:14px}
   /* modais como folha inferior: mais fácil de alcançar com o polegar */
   dialog,#dlg-voz{width:100%;max-width:100%;margin:auto auto 0;border-radius:18px 18px 0 0;
     padding:20px 18px calc(20px + env(safe-area-inset-bottom));max-height:92dvh}
-  dialog::backdrop{background:rgba(27,29,26,.5)}
+  dialog::backdrop{background:var(--backdrop)}
   .linha2{grid-template-columns:1fr}
   #gravar{width:104px;height:104px;font-size:36px}
   .onda{width:104px;height:104px}
@@ -366,6 +405,7 @@ dialog h3{font-size:17px;font-weight:700;margin-bottom:14px}
       <button id="mes-ant" aria-label="Mês anterior">‹</button>
       <span id="mes-rot">—</span>
       <button id="mes-prox" aria-label="Próximo mês">›</button>
+      <button id="tema" title="Tema">◐</button>
       <button class="sair" id="sair">sair</button>
     </div>
   </header>
@@ -1488,6 +1528,43 @@ function paraBase64(blob){
     fr.readAsDataURL(blob);
   });
 }
+
+// ===================== TEMA =====================
+// Três estados: acompanha o sistema, força claro, força escuro.
+const TEMAS = [
+  { v: "auto",   icone: "◐", titulo: "Tema: do sistema" },
+  { v: "claro",  icone: "☀", titulo: "Tema: claro" },
+  { v: "escuro", icone: "☾", titulo: "Tema: escuro" },
+];
+
+function aplicarTema(v){
+  const t = TEMAS.find(x => x.v === v) ?? TEMAS[0];
+  if (t.v === "auto") document.documentElement.removeAttribute("data-tema");
+  else document.documentElement.setAttribute("data-tema", t.v);
+
+  localStorage.setItem("tema", t.v);
+  $("#tema").textContent = t.icone;
+  $("#tema").title = t.titulo;
+
+  // a barra de status do iOS acompanha o fundo real
+  requestAnimationFrame(() => {
+    const fundo = getComputedStyle(document.body).backgroundColor;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", fundo);
+  });
+}
+
+aplicarTema(localStorage.getItem("tema") ?? "auto");
+
+$("#tema").onclick = () => {
+  const atual = localStorage.getItem("tema") ?? "auto";
+  const i = TEMAS.findIndex(t => t.v === atual);
+  aplicarTema(TEMAS[(i + 1) % TEMAS.length].v);
+};
+
+// no modo automático, segue a troca do sistema em tempo real
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+  if ((localStorage.getItem("tema") ?? "auto") === "auto") aplicarTema("auto");
+});
 
 // ===================== NAVEGAÇÃO =====================
 const abas = document.querySelectorAll('nav [role="tab"]');
