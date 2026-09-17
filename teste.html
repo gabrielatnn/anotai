@@ -22,7 +22,7 @@ h1{font-size:25px;font-weight:800;letter-spacing:-.025em;text-align:center}
 .chave summary::-webkit-details-marker{display:none}
 .chave summary:hover{color:var(--tinta)}
 .chave .ok{color:var(--verde);font-weight:600}
-.chave input{width:100%;margin-top:8px;padding:10px 12px;border:1px solid var(--linha);
+.chave input,.chave select{width:100%;margin-top:8px;padding:10px 12px;border:1px solid var(--linha);
   background:var(--papel-2);border-radius:10px;font-size:14px;font-family:inherit;color:var(--tinta)}
 
 /* palco */
@@ -78,6 +78,7 @@ h1{font-size:25px;font-weight:800;letter-spacing:-.025em;text-align:center}
   <details class="chave" id="det-chave">
     <summary id="rot-chave">Configurar chave do Gemini</summary>
     <input id="chave" type="password" placeholder="cole a chave — fica salva só neste navegador">
+    <select id="modelo"><option value="">— modelos aparecem ao colar a chave —</option></select>
   </details>
 
   <div class="palco">
@@ -99,7 +100,6 @@ h1{font-size:25px;font-weight:800;letter-spacing:-.025em;text-align:center}
 
 <script type="module">
 const $ = s => document.querySelector(s);
-const MODELO = "gemini-2.5-flash";
 const FUSO = "America/Sao_Paulo";
 
 // mesmas listas que o usuário teria no banco
@@ -118,8 +118,17 @@ const rotuloChave = () => {
   return tem;
 };
 $("#chave").value = localStorage.getItem("gemini") ?? "";
-if (!rotuloChave()) $("#det-chave").open = true;
-$("#chave").oninput = e => { localStorage.setItem("gemini", e.target.value.trim()); rotuloChave(); };
+if (rotuloChave()) carregarModelos($("#chave").value.trim());
+else $("#det-chave").open = true;
+
+let debounce;
+$("#chave").oninput = e => {
+  const v = e.target.value.trim();
+  localStorage.setItem("gemini", v);
+  rotuloChave();
+  clearTimeout(debounce);
+  if (v) debounce = setTimeout(() => carregarModelos(v), 600);
+};
 
 let rec = null, pedacos = [];
 
@@ -238,7 +247,7 @@ function mostrar(transcricao, itens, ms){
         </div>
       </div>`).join("")
       : `<div class="item"><span class="erro">Nenhum valor identificado — correto se você não falou nenhum.</span></div>`}
-    <div class="tempo">${ms} ms</div>`;
+    <div class="tempo">${modeloAtual()} · ${ms} ms</div>`;
 }
 
 async function extrair(chave, texto){
@@ -289,14 +298,46 @@ Frase: "${texto}"`;
   } catch { return []; }
 }
 
+const modeloAtual = () => $("#modelo").value || "gemini-flash-latest";
+
+// Os nomes dos modelos mudam e os antigos são aposentados, então a lista
+// vem da própria API em vez de ficar fixa no código.
+async function carregarModelos(chave){
+  try {
+    const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models", {
+      headers: { "x-goog-api-key": chave } });
+    if (!r.ok) return;
+    const { models = [] } = await r.json();
+
+    const uteis = models
+      .filter(m => (m.supportedGenerationMethods ?? []).includes("generateContent"))
+      .map(m => m.name.replace("models/", ""))
+      .filter(n => /flash|pro/.test(n) && !/tts|image|audio-dialog|embedding|video/.test(n))
+      .sort();
+
+    if (!uteis.length) return;
+
+    // Flash-Lite primeiro: é o mais barato e rápido, que é o que o bot precisa.
+    const preferido = localStorage.getItem("modelo")
+      ?? uteis.find(n => /flash-lite/.test(n))
+      ?? uteis.find(n => /flash/.test(n))
+      ?? uteis[0];
+
+    $("#modelo").innerHTML = uteis
+      .map(n => `<option value="${n}" ${n === preferido ? "selected" : ""}>${n}</option>`).join("");
+    $("#modelo").onchange = e => localStorage.setItem("modelo", e.target.value);
+  } catch {}
+}
+
 async function gemini(chave, body){
   const r = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${MODELO}:generateContent`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${modeloAtual()}:generateContent`,
     { method:"POST", headers:{ "Content-Type":"application/json", "x-goog-api-key": chave },
       body: JSON.stringify(body) });
   if (!r.ok) {
     const t = await r.text();
     if (r.status === 400 && /API key/i.test(t)) throw new Error("Chave inválida.");
+    if (r.status === 404) throw new Error("Esse modelo não existe mais. Escolha outro na lista da chave.");
     throw new Error(`Gemini ${r.status}: ${t.slice(0,160)}`);
   }
   const j = await r.json();
