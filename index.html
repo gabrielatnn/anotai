@@ -777,6 +777,9 @@ function pintarPainel(r, porCat){
   const receita = Number(r?.receita ?? 0);
   const gasto   = Number(r?.gasto ?? 0);
   const saldo   = Number(r?.saldo ?? 0);
+  const anterior  = Number(r?.saldo_anterior ?? 0);
+  const resultado = Number(r?.resultado ?? 0);
+  const temHist   = !!r?.tem_historico;
   const orc     = Number(r?.orcamento ?? 0);
   const sobra   = Number(r?.sobra_por_dia ?? 0);
   const media   = Number(r?.media_diaria ?? 0);
@@ -785,13 +788,19 @@ function pintarPainel(r, porCat){
   const aPagar   = Number(r?.a_pagar ?? 0);
   const vencido  = Number(r?.vencido ?? 0);
   const projetado = Number(r?.saldo_projetado ?? 0);
-  const temSaldo = receita > 0;
+  const temSaldo = temHist || receita > 0 || gasto > 0;
 
   $("#metricas").innerHTML = `
     <div class="card metrica">
       <div class="rot">Entrou</div>
       <div class="n verde">${dinheiro(receita)}</div>
       <div class="obs">${receita ? "receitas do mês" : "nenhuma entrada registrada"}</div>
+      ${temHist ? `
+        <div class="projetado">
+          <div class="rot">Veio do mês anterior</div>
+          <div class="n pequeno ${anterior < 0 ? "alerta" : ""}">${dinheiro(anterior)}</div>
+          <div class="obs">saldo acumulado até ${mes.toLocaleDateString("pt-BR",{month:"long"})}</div>
+        </div>` : ""}
     </div>
     <div class="card metrica">
       <div class="rot">Saiu</div>
@@ -805,8 +814,11 @@ function pintarPainel(r, porCat){
       </div>
       <div class="obs">${
         !temSaldo ? "registre o que entra para ver o saldo"
-        : base === "nenhuma" ? "entrou menos saiu"
-        : `sobram R$ ${brl(sobra)} por dia nos ${dias} dias restantes`}</div>
+        : `${anterior ? `R$ ${brl(anterior)} de antes ` : ""}${
+            resultado >= 0 ? "+" : "−"} R$ ${brl(Math.abs(resultado))} no mês`}</div>
+      ${temSaldo && base !== "nenhuma" ? `
+        <div class="obs" style="margin-top:4px">
+          sobram R$ ${brl(sobra)} por dia nos ${dias} dias restantes</div>` : ""}
       ${aPagar ? `
         <div class="projetado">
           <div class="rot">A pagar ainda</div>
