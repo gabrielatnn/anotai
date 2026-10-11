@@ -489,6 +489,14 @@ dialog h3{font-size:17px;font-weight:700;margin-bottom:14px}
           <option value="">— modelos aparecem ao colar a chave —</option>
         </select>
       </div>
+      <div class="card bloco" style="margin-bottom:12px">
+        <h2>Começo do saldo</h2>
+        <p class="sub">O saldo acumula a partir deste mês. O que foi lançado antes não entra na conta.</p>
+        <input id="inicio-saldo" type="month"
+          style="width:100%;padding:10px 12px;border:1px solid var(--linha);background:var(--papel-2);
+          border-radius:8px;font-size:14px;font-family:inherit;color:var(--tinta)">
+        <div class="sub" id="inicio-aviso" style="margin:8px 0 0"></div>
+      </div>
       <div class="card bloco">
         <h2>WhatsApp</h2>
         <p class="sub">Em breve. Quando o canal estiver ativo, este código conecta seu número.</p>
@@ -741,6 +749,7 @@ async function carregar(sentido){
   pintarOrcamento(orcs.data ?? []);
   ocorrencias = ocor.data ?? [];
   pintarContas(ocorrencias);
+  pintarInicioSaldo();
   pintarConexao();
 }
 
@@ -795,7 +804,7 @@ function pintarPainel(r, porCat){
       <div class="rot">Entrou</div>
       <div class="n verde">${dinheiro(receita)}</div>
       <div class="obs">${receita ? "receitas do mês" : "nenhuma entrada registrada"}</div>
-      ${temHist ? `
+      ${temHist && anterior !== 0 ? `
         <div class="projetado">
           <div class="rot">Veio do mês anterior</div>
           <div class="n pequeno ${anterior < 0 ? "alerta" : ""}">${dinheiro(anterior)}</div>
@@ -965,6 +974,22 @@ function pintarContas(lista){
   }).join("") : `<div class="vazio">Cadastre aluguel, luz, financiamento —<br>
     o app passa a prever o que ainda vai sair no mês.</div>`;
 }
+
+async function pintarInicioSaldo(){
+  const { data } = await db.from("perfis").select("inicio_saldo").maybeSingle();
+  $("#inicio-saldo").value = (data?.inicio_saldo ?? "").slice(0, 7);
+}
+
+$("#inicio-saldo").onchange = async e => {
+  const v = e.target.value;                 // AAAA-MM
+  if (!v) return;
+  const { error } = await db.from("perfis").update({ inicio_saldo: `${v}-01` })
+    .eq("id", (await db.auth.getUser()).data.user.id);
+  $("#inicio-aviso").textContent = error
+    ? error.message
+    : "Salvo. O saldo passa a acumular a partir deste mês.";
+  if (!error) { setTimeout(() => $("#inicio-aviso").textContent = "", 2500); await carregar(); }
+};
 
 function pintarConexao(){
   db.from("perfis").select("telefone, vinculado_em").maybeSingle().then(async ({ data: perfil }) => {
